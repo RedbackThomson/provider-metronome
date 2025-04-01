@@ -78,7 +78,7 @@ type ListCustomerContractsResponse struct {
 }
 
 func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, error) {
-	url := fmt.Sprintf("%s/v2/contracts/get", c.BaseURL)
+	url := fmt.Sprintf("%s/v2/contracts/get", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, 
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, 
 }
 
 func (c *Client) ListCustomerContracts(reqData ListCustomerContractsRequest) (*ListCustomerContractsResponse, error) {
-	url := fmt.Sprintf("%s/v2/contracts/list", c.BaseURL)
+	url := fmt.Sprintf("%s/v2/contracts/list", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (c *Client) ListCustomerContracts(reqData ListCustomerContractsRequest) (*L
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

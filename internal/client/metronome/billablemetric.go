@@ -73,9 +73,21 @@ type UpdateBillableMetricRequest struct {
 	Name string `json:"name"`
 }
 
+// ArchiveBillableMetricRequest represents the request payload to archive a billable metric.
+type ArchiveBillableMetricRequest struct {
+	ID string `json:"id"` // ID of the billable metric to archive
+}
+
+// ArchiveBillableMetricResponse represents the response for archiving a billable metric.
+type ArchiveBillableMetricResponse struct {
+	Data struct {
+		ID string `json:"id"` // ID of the archived billable metric
+	} `json:"data"`
+}
+
 // CreateBillableMetric creates a new billable metric.
 func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
-	url := fmt.Sprintf("%s/v1/billable-metrics/create", c.BaseURL)
+	url := fmt.Sprintf("%s/v1/billable-metrics/create", c.baseURL)
 
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
@@ -87,7 +99,7 @@ func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*Cre
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -107,14 +119,14 @@ func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*Cre
 
 // GetBillableMetric retrieves a billable metric by ID.
 func (c *Client) GetBillableMetric(id string) (*BillableMetric, error) {
-	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.BaseURL, id)
+	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
 	req, err := c.newAuthenticatedRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -136,14 +148,14 @@ func (c *Client) GetBillableMetric(id string) (*BillableMetric, error) {
 
 // ListBillableMetrics retrieves a list of all billable metrics.
 func (c *Client) ListBillableMetrics() (*ListBillableMetricsResponse, error) {
-	url := fmt.Sprintf("%s/v1/billable-metrics", c.BaseURL)
+	url := fmt.Sprintf("%s/v1/billable-metrics", c.baseURL)
 
 	req, err := c.newAuthenticatedRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -163,7 +175,7 @@ func (c *Client) ListBillableMetrics() (*ListBillableMetricsResponse, error) {
 
 // UpdateBillableMetric updates a billable metric by ID.
 func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
-	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.BaseURL, id)
+	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
@@ -175,7 +187,7 @@ func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricReq
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -186,6 +198,44 @@ func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricReq
 	}
 
 	var response CreateBillableMetricResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &response, nil
+}
+
+// ArchiveBillableMetric archives a billable metric by ID.
+func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricResponse, error) {
+	url := fmt.Sprintf("%s/v1/billable-metrics/archive", c.baseURL)
+
+	// Prepare the request payload
+	reqData := ArchiveBillableMetricRequest{ID: id}
+	jsonData, err := json.Marshal(reqData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request data: %w", err)
+	}
+
+	// Create a new authenticated request
+	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Execute the HTTP request
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check for a successful response
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to archive billable metric: %s", resp.Status)
+	}
+
+	// Decode the response data
+	var response ArchiveBillableMetricResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}

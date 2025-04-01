@@ -40,8 +40,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/RedbackThomson/provider-metronome/apis"
-	template "github.com/RedbackThomson/provider-metronome/pkg/controller"
+	"github.com/redbackthomson/provider-metronome/apis"
+	metronomeControllers "github.com/redbackthomson/provider-metronome/internal/controller"
 )
 
 func main() {
@@ -49,13 +49,14 @@ func main() {
 		app                     = kingpin.New(filepath.Base(os.Args[0]), "Metronome provider for Crossplane.").DefaultEnvars()
 		debug                   = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
 		leaderElection          = app.Flag("leader-election", "Use leader election for the conroller manager.").Short('l').Default("false").Envar("LEADER_ELECTION").Bool()
-		timeout                 = app.Flag("timeout", "Controls how long Metronome API commands may run before they are killed.").Default("10m").Duration()
 		syncInterval            = app.Flag("sync", "How often all resources will be double-checked for drift from the desired state.").Short('s').Default("1h").Duration()
 		pollInterval            = app.Flag("poll", "How often individual resources will be checked for drift from the desired state").Default("10m").Duration()
 		pollStateMetricInterval = app.Flag("poll-state-metric", "State metric recording interval").Default("5s").Duration()
 		maxReconcileRate        = app.Flag("max-reconcile-rate", "The global maximum rate per second at which resources may checked for drift from the desired state.").Default("100").Int()
 
 		enableManagementPolicies = app.Flag("enable-management-policies", "Enable support for Management Policies.").Default("true").Envar("ENABLE_MANAGEMENT_POLICIES").Bool()
+
+		metronomeBaseUrl = app.Flag("metronome-base-url", "Base URL to use for all Metronome API requests").Default("https://api.metronome.com/").Envar("METRONOME_BASE_URL")
 	)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
@@ -120,7 +121,7 @@ func main() {
 		log.Info("Beta feature enabled", "flag", feature.EnableBetaManagementPolicies)
 	}
 
-	kingpin.FatalIfError(template.Setup(mgr, o, *timeout), "Cannot setup Template controllers")
+	kingpin.FatalIfError(metronomeControllers.Setup(mgr, o, *metronomeBaseUrl.String()), "Cannot setup Template controllers")
 	kingpin.FatalIfError(mgr.Start(ctrl.SetupSignalHandler()), "Cannot start controller manager")
 }
 

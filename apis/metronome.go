@@ -20,15 +20,15 @@ package apis
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/RedbackThomson/provider-metronome/apis/release/v1alpha1"
-	metronomev1alpha1 "github.com/RedbackThomson/provider-metronome/apis/v1alpha1"
+	billablemetricv1alpha1 "github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
+	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
 )
 
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
 		metronomev1alpha1.SchemeBuilder.AddToScheme,
-		v1alpha1.SchemeBuilder.AddToScheme,
+		billablemetricv1alpha1.SchemeBuilder.AddToScheme,
 	)
 }
 

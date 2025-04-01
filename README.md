@@ -1,6 +1,6 @@
-[![Build Actions Status](https://github.com/RedbackThomson/provider-metronome/workflows/CI/badge.svg)](https://github.com/RedbackThomson/provider-metronome/actions)
-[![GitHub release](https://img.shields.io/github/release/RedbackThomson/provider-metronome/all.svg?style=flat-square)](https://github.com/RedbackThomson/provider-metronome/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/RedbackThomson/provider-metronome)](https://goreportcard.com/report/github.com/RedbackThomson/provider-metronome)
+[![Build Actions Status](https://github.com/redbackthomson/provider-metronome/workflows/CI/badge.svg)](https://github.com/redbackthomson/provider-metronome/actions)
+[![GitHub release](https://img.shields.io/github/release/redbackthomson/provider-metronome/all.svg?style=flat-square)](https://github.com/redbackthomson/provider-metronome/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/redbackthomson/provider-metronome)](https://goreportcard.com/report/github.com/redbackthomson/provider-metronome)
 
 # provider-metronome
 

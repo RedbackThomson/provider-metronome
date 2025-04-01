@@ -4,7 +4,7 @@ metadata:
   name: provider-metronome
   annotations:
     meta.crossplane.io/maintainer: Crossplane Maintainers <info@crossplane.io>
-    meta.crossplane.io/source: github.com/RedbackThomson/provider-metronome
+    meta.crossplane.io/source: github.com/redbackthomson/provider-metronome
     meta.crossplane.io/license: Apache-2.0
     meta.crossplane.io/description: |
       The Metronome Crossplane provider enables management of Metronome
@@ -18,6 +18,6 @@ metadata:
       If you encounter an issue please reach out on
       [slack.crossplane.io](https://slack.crossplane.io) and create an issue in
       the
-      [RedbackThomson/provider-metronome](https://github.com/RedbackThomson/provider-metronome)
+      [redbackthomson/provider-metronome](https://github.com/redbackthomson/provider-metronome)
       repo.
     friendly-name.meta.crossplane.io: Provider Metronome

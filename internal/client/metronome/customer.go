@@ -78,7 +78,7 @@ type UpdateAliasesRequest struct {
 }
 
 func (c *Client) CreateCustomer(reqData CreateCustomerRequest) (*CreateCustomerResponse, error) {
-	url := fmt.Sprintf("%s/v1/customers", c.BaseURL)
+	url := fmt.Sprintf("%s/v1/customers", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (c *Client) CreateCustomer(reqData CreateCustomerRequest) (*CreateCustomerR
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -108,14 +108,14 @@ func (c *Client) CreateCustomer(reqData CreateCustomerRequest) (*CreateCustomerR
 }
 
 func (c *Client) GetCustomer(customerID string) (*GetCustomerResponse, error) {
-	url := fmt.Sprintf("%s/v1/customers/%s", c.BaseURL, customerID)
+	url := fmt.Sprintf("%s/v1/customers/%s", c.baseURL, customerID)
 
 	req, err := c.newAuthenticatedRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (c *Client) GetCustomer(customerID string) (*GetCustomerResponse, error) {
 }
 
 func (c *Client) UpdateCustomerAliases(customerID string, reqData UpdateAliasesRequest) error {
-	url := fmt.Sprintf("%s/v1/customers/%s/setIngestAliases", c.BaseURL, customerID)
+	url := fmt.Sprintf("%s/v1/customers/%s/setIngestAliases", c.baseURL, customerID)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func (c *Client) UpdateCustomerAliases(customerID string, reqData UpdateAliasesR
 		return err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -159,13 +159,13 @@ func (c *Client) UpdateCustomerAliases(customerID string, reqData UpdateAliasesR
 }
 
 func (c *Client) ListCustomers() (*ListCustomersResponse, error) {
-	url := fmt.Sprintf("%s/v1/customers", c.BaseURL)
+	url := fmt.Sprintf("%s/v1/customers", c.baseURL)
 	req, err := c.newAuthenticatedRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

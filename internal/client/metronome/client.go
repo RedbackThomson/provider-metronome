@@ -19,12 +19,16 @@ package metronome
 import (
 	"bytes"
 	"net/http"
+
+	"github.com/crossplane/crossplane-runtime/pkg/logging"
 )
 
 type Client struct {
-	BaseURL    string
-	AuthToken  string
-	HTTPClient *http.Client
+	logger logging.Logger
+
+	baseURL    string
+	authToken  string
+	httpClient *http.Client
 }
 
 func (c *Client) newAuthenticatedRequest(method, url string, body []byte) (*http.Request, error) {
@@ -32,15 +36,16 @@ func (c *Client) newAuthenticatedRequest(method, url string, body []byte) (*http
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+c.AuthToken)
+	req.Header.Set("Authorization", "Bearer "+c.authToken)
 	req.Header.Set("Content-Type", "application/json")
 	return req, nil
 }
 
-func New(baseURL, authToken string) *Client {
+func New(log logging.Logger, baseURL, authToken string) *Client {
 	return &Client{
-		BaseURL:    baseURL,
-		AuthToken:  authToken,
-		HTTPClient: &http.Client{},
+		logger:     log,
+		baseURL:    baseURL,
+		authToken:  authToken,
+		httpClient: &http.Client{},
 	}
 }

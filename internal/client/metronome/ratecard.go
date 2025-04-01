@@ -83,7 +83,7 @@ type RateCardAlias struct {
 }
 
 func (c *Client) GetRateCard(reqData GetRateCardRequest) (*GetRateCardResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/get", c.BaseURL)
+	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/get", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (c *Client) GetRateCard(reqData GetRateCardRequest) (*GetRateCardResponse, 
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (c *Client) GetRateCard(reqData GetRateCardRequest) (*GetRateCardResponse, 
 }
 
 func (c *Client) CreateRateCard(reqData CreateRateCardRequest) (*CreateRateCardResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/create", c.BaseURL)
+	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/create", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (c *Client) CreateRateCard(reqData CreateRateCardRequest) (*CreateRateCardR
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (c *Client) CreateRateCard(reqData CreateRateCardRequest) (*CreateRateCardR
 }
 
 func (c *Client) UpdateRateCard(reqData UpdateRateCardRequest) (*UpdateRateCardResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/update", c.BaseURL)
+	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/update", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (c *Client) UpdateRateCard(reqData UpdateRateCardRequest) (*UpdateRateCardR
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

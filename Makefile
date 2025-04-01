@@ -1,6 +1,6 @@
 # Project Setup
 PROJECT_NAME := provider-metronome
-PROJECT_REPO := github.com/crossplane-contrib/$(PROJECT_NAME)
+PROJECT_REPO := github.com/redbackthomson/$(PROJECT_NAME)
 
 PLATFORMS ?= linux_amd64 linux_arm64
 -include build/makelib/common.mk
@@ -24,7 +24,7 @@ GO_TEST_PARALLEL := $(shell echo $$(( $(NPROCS) / 2 )))
 
 GO_STATIC_PACKAGES = $(GO_PROJECT)/cmd/provider
 GO_LDFLAGS += -X $(GO_PROJECT)/pkg/version.Version=$(VERSION)
-GO_SUBDIRS += cmd pkg apis
+GO_SUBDIRS += cmd internal apis
 GO111MODULE = on
 GOLANGCILINT_VERSION = 1.61.0
 
@@ -41,7 +41,7 @@ USE_HELM3 = true
 # ====================================================================================
 # Setup Images
 
-IMAGES = provider-helm
+IMAGES = provider-metronome
 -include build/makelib/imagelight.mk
 
 # ====================================================================================
@@ -65,12 +65,12 @@ XPKG_REG_ORGS ?= xpkg.upbound.io/crossplane-contrib
 # NOTE(hasheddan): skip promoting on xpkg.upbound.io as channel tags are
 # inferred.
 XPKG_REG_ORGS_NO_PROMOTE ?= xpkg.upbound.io/crossplane-contrib
-XPKGS = provider-helm
+XPKGS = provider-metronome
 -include build/makelib/xpkg.mk
 
 # We force image building to happen prior to xpkg build so that we ensure image
 # is present in daemon.
-xpkg.build.provider-helm: do.build.images
+xpkg.build.provider-metronome: do.build.images
 
 # ====================================================================================
 # Setup Local Dev
