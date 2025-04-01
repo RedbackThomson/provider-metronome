@@ -1,0 +1,8 @@
+/.cache
+/.work
+/_output
+/bin
+/vendor
+/.vendor-new
+.vscode
+.idea
