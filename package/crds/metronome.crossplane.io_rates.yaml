@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
-  name: ratecards.metronome.crossplane.io
+  name: rates.metronome.crossplane.io
 spec:
   group: metronome.crossplane.io
   names:
@@ -12,10 +12,10 @@ spec:
     - crossplane
     - managed
     - metronome
-    kind: RateCard
-    listKind: RateCardList
-    plural: ratecards
-    singular: ratecard
+    kind: Rate
+    listKind: RateList
+    plural: rates
+    singular: rate
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -31,7 +31,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: RateCard represents a Metronome Rate Card resource
+        description: Rate represents a Metronome Rate resource
         properties:
           apiVersion:
             description: |-
@@ -51,7 +51,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: RateCardSpec defines the desired state of a Release.
+            description: RateSpec defines the desired state of a Release.
             properties:
               deletionPolicy:
                 default: Delete
@@ -68,42 +68,149 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: RateCardParameters represents the request payload for
-                  creating a rate card.
+                description: RateParameters represents the request payload for creating
+                  a rate card.
                 properties:
-                  aliases:
-                    items:
-                      properties:
-                        name:
-                          type: string
-                      required:
-                      - name
-                      type: object
-                    type: array
-                  credit_type_conversions:
-                    items:
-                      properties:
-                        custom_credit_type_id:
-                          type: string
-                        fiat_per_custom_credit:
-                          type: string
-                      required:
-                      - custom_credit_type_id
-                      - fiat_per_custom_credit
-                      type: object
-                    type: array
-                  custom_fields:
+                  commit_rate:
+                    properties:
+                      price:
+                        type: number
+                      rate_type:
+                        type: string
+                      tiers:
+                        items:
+                          properties:
+                            price:
+                              type: number
+                            size:
+                              type: number
+                          required:
+                          - price
+                          - size
+                          type: object
+                        type: array
+                    required:
+                    - price
+                    - rate_type
+                    - tiers
+                    type: object
+                  credit_type_id:
+                    type: string
+                  ending_before:
+                    type: string
+                  entitled:
+                    type: boolean
+                  is_prorated:
+                    type: boolean
+                  price:
+                    type: number
+                  pricing_group_values:
                     additionalProperties:
                       type: string
                     type: object
-                  description:
+                  product_id:
                     type: string
-                  fiat_credit_type_id:
+                  quantity:
+                    type: number
+                  rate_card_id:
                     type: string
-                  name:
+                  rate_card_ref:
+                    description: A Reference to a named object.
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                      policy:
+                        description: Policies for referencing.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  rate_card_selector:
+                    description: A Selector selects an object.
+                    properties:
+                      matchControllerRef:
+                        description: |-
+                          MatchControllerRef ensures an object with the same controller reference
+                          as the selecting object is selected.
+                        type: boolean
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: MatchLabels ensures an object with matching labels
+                          is selected.
+                        type: object
+                      policy:
+                        description: Policies for selection.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    type: object
+                  rate_type:
                     type: string
+                  starting_at:
+                    type: string
+                  tiers:
+                    items:
+                      properties:
+                        price:
+                          type: number
+                        size:
+                          type: number
+                      required:
+                      - price
+                      - size
+                      type: object
+                    type: array
+                  use_list_prices:
+                    type: boolean
                 required:
-                - name
+                - entitled
+                - product_id
+                - rate_type
+                - starting_at
                 type: object
               managementPolicies:
                 default:
@@ -273,50 +380,106 @@ spec:
             - forProvider
             type: object
           status:
-            description: RateCardStatus represents the observed state of a Release.
+            description: RateStatus represents the observed state of a Release.
             properties:
               atProvider:
-                description: ObservedRateCard represents the data structure of a rate
+                description: ObservedRate represents the data structure of a rate
                   card.
                 properties:
-                  aliases:
-                    items:
-                      properties:
-                        name:
-                          type: string
-                      required:
-                      - name
-                      type: object
-                    type: array
-                  created_at:
+                  commit_rate:
+                    properties:
+                      price:
+                        type: number
+                      rate_type:
+                        type: string
+                      tiers:
+                        items:
+                          properties:
+                            price:
+                              type: number
+                            size:
+                              type: number
+                          required:
+                          - price
+                          - size
+                          type: object
+                        type: array
+                    required:
+                    - price
+                    - rate_type
+                    - tiers
+                    type: object
+                  ending_before:
                     type: string
-                  created_by:
-                    type: string
-                  custom_fields:
+                  entitled:
+                    type: boolean
+                  pricing_group_values:
                     additionalProperties:
                       type: string
                     type: object
-                  description:
-                    type: string
-                  fiat_credit_type:
-                    properties:
-                      id:
-                        type: string
-                      name:
-                        type: string
-                    required:
-                    - id
-                    - name
+                  product_custom_fields:
+                    additionalProperties:
+                      type: string
                     type: object
-                  id:
+                  product_id:
                     type: string
-                  name:
+                  product_name:
+                    type: string
+                  product_tags:
+                    items:
+                      type: string
+                    type: array
+                  rate:
+                    properties:
+                      credit_type:
+                        properties:
+                          id:
+                            type: string
+                          name:
+                            type: string
+                        required:
+                        - id
+                        - name
+                        type: object
+                      is_prorated:
+                        type: boolean
+                      price:
+                        type: number
+                      pricing_group_values:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      quantity:
+                        type: number
+                      rate_type:
+                        type: string
+                      tiers:
+                        items:
+                          properties:
+                            price:
+                              type: number
+                            size:
+                              type: number
+                          required:
+                          - price
+                          - size
+                          type: object
+                        type: array
+                      use_list_prices:
+                        type: boolean
+                    required:
+                    - rate_type
+                    type: object
+                  starting_at:
                     type: string
                 required:
-                - created_at
-                - created_by
-                - id
-                - name
+                - entitled
+                - product_custom_fields
+                - product_id
+                - product_name
+                - product_tags
+                - rate
+                - starting_at
                 type: object
               conditions:
                 description: Conditions of the resource.

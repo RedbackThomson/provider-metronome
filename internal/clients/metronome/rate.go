@@ -63,7 +63,7 @@ type AddRateRequest struct {
 	RateCardID         string            `json:"rate_card_id"`
 	RateType           string            `json:"rate_type"`
 	StartingAt         string            `json:"starting_at"`
-	CommitRate         CommitRate        `json:"commit_rate,omitempty"`
+	CommitRate         *CommitRate       `json:"commit_rate,omitempty"`
 	CreditTypeID       string            `json:"credit_type_id,omitempty"`
 	EndingBefore       string            `json:"ending_before,omitempty"`
 	IsProrated         bool              `json:"is_prorated,omitempty"`
@@ -76,8 +76,8 @@ type AddRateRequest struct {
 
 type AddRateResponse struct {
 	Data struct {
-		RateType string `json:"rate_type"`
-		Price    string `json:"price"`
+		RateType string  `json:"rate_type"`
+		Price    float64 `json:"price"`
 	} `json:"data"`
 }
 
@@ -93,15 +93,14 @@ type CommitRate struct {
 }
 
 type Rate struct {
-	RateCardID         string            `json:"rate_card_id"`
 	Entitled           bool              `json:"entitled"`
 	ProductCustomField map[string]string `json:"product_custom_fields"`
 	ProductID          string            `json:"product_id"`
 	ProductName        string            `json:"product_name"`
 	ProductTags        []string          `json:"product_tags"`
-	Rate               RateDetails       `json:"rate"`
+	Details            RateDetails       `json:"rate"`
 	StartingAt         string            `json:"starting_at"`
-	CommitRate         CommitRate        `json:"commit_rate,omitempty"`
+	CommitRate         *CommitRate       `json:"commit_rate,omitempty"`
 	EndingBefore       string            `json:"ending_before,omitempty"`
 	PricingGroupValues map[string]string `json:"pricing_group_values,omitempty"`
 }
@@ -195,9 +194,9 @@ func (c *Client) AddRate(reqData AddRateRequest) (*AddRateResponse, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
-			return nil, errors.Wrap(c, "failed to add rates")
+			return nil, errors.Wrap(c, "failed to add rate")
 		}
-		return nil, errors.New("failed to add rates: " + resp.Status)
+		return nil, errors.New("failed to add rate: " + resp.Status)
 	}
 
 	var response AddRateResponse
@@ -229,13 +228,14 @@ type RateConverter interface {
 	ToRate(in *v1alpha1.ObservedRate) *Rate
 
 	// goverter:ignoreMissing
-	// goverter:map Rate.RateType RateType
-	// goverter:map Rate.IsProrated IsProrated
-	// goverter:map Rate.Price Price
-	// goverter:map Rate.PricingGroupValues PricingGroupValues
-	// goverter:map Rate.Quantity Quantity
-	// goverter:map Rate.Tiers Tiers
-	// goverter:map Rate.UseListPrices UseListPrices
-	// goverter:map Rate.CreditType.ID CreditTypeID
+	// goverter:ignore RateCardID
+	// goverter:map Details.RateType RateType
+	// goverter:map Details.IsProrated IsProrated
+	// goverter:map Details.Price Price
+	// goverter:map Details.PricingGroupValues PricingGroupValues
+	// goverter:map Details.Quantity Quantity
+	// goverter:map Details.Tiers Tiers
+	// goverter:map Details.UseListPrices UseListPrices
+	// goverter:map Details.CreditType.ID CreditTypeID
 	FromRateToParameters(in *Rate) *v1alpha1.RateParameters
 }

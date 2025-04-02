@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package billablemetric
+package rate
 
 import (
 	"context"
@@ -32,30 +32,29 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 
-	"github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
+	"github.com/redbackthomson/provider-metronome/apis/rate/v1alpha1"
 	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
 	metronomeClient "github.com/redbackthomson/provider-metronome/internal/clients/metronome"
 )
 
 const (
-	errNotBillableMetric         = "managed resource is not a BillableMetric custom resource"
-	errProviderConfigNotSet      = "provider config is not set"
-	errGetProviderConfig         = "cannot get provider config"
-	errGetCreds                  = "failed to create credentials from provider config"
-	errFailedToTrackUsage        = "cannot track provider config usage"
-	errFailedToGetBillableMetric = "failed to get billable metric"
-	errCreateBillableMetric      = "cannot create billable metric"
-	errArchiveBillableMetric     = "cannot archive billable metric"
+	errNotRate              = "managed resource is not a Rate custom resource"
+	errProviderConfigNotSet = "provider config is not set"
+	errGetProviderConfig    = "cannot get provider config"
+	errGetCreds             = "failed to create credentials from provider config"
+	errFailedToTrackUsage   = "cannot track provider config usage"
+	errGetRate              = "failed to get rate"
+	errCreateRate           = "cannot create rate"
+	errArchiveRate          = "cannot archive rate"
 )
 
 // Setup adds a controller that reconciles Release managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
-	name := managed.ControllerName(v1alpha1.BillableMetricGroupKind)
+	name := managed.ControllerName(v1alpha1.RateGroupKind)
 
 	reconcilerOptions := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{
@@ -76,18 +75,18 @@ func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 	}
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.BillableMetricList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.RateList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
 		return err
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.BillableMetricGroupVersionKind),
+		resource.ManagedKind(v1alpha1.RateGroupVersionKind),
 		reconcilerOptions...,
 	)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&v1alpha1.BillableMetric{}).
+		For(&v1alpha1.Rate{}).
 		WithOptions(o.ForControllerRuntime()).
 		Complete(r)
 }
@@ -102,9 +101,9 @@ type connector struct {
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) { //nolint:gocyclo
-	cr, ok := mg.(*v1alpha1.BillableMetric)
+	cr, ok := mg.(*v1alpha1.Rate)
 	if !ok {
-		return nil, errors.New(errNotBillableMetric)
+		return nil, errors.New(errNotRate)
 	}
 	l := c.logger.WithValues("request", cr.Name)
 
@@ -148,130 +147,161 @@ func (e *metronomeExternal) Disconnect(ctx context.Context) error {
 	return nil
 }
 
+// Observe checks to see if the resource already exists. Metronome doesn't give
+// rates a unique ID, so the only way to know if we've already created one is to
+// search through all of the existing rates (with a bit of server-side
+// filtering) and compare the spec against each of them. If our spec matches an
+// existing rate, then we will assume we created it, otherwise we assume it
+// doesn't exist.
 func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.BillableMetric)
+	cr, ok := mg.(*v1alpha1.Rate)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotBillableMetric)
+		return managed.ExternalObservation{}, errors.New(errNotRate)
 	}
 
 	e.logger.Debug("Observing")
 
-	id := meta.GetExternalName(cr)
-	if id == "" {
-		return managed.ExternalObservation{}, nil
+	// no such thing as "deleting" a rate, so don't block on observe
+	if cr.DeletionTimestamp != nil {
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	metric, err := e.metronome.GetBillableMetric(id)
-	if err != nil {
-		// the external name isn't valid
-		if errors.Is(err, metronomeClient.ErrBillableMetricInvalidName) {
+	var foundRate *metronomeClient.Rate
+	nextPage := ""
+	for true {
+		res, err := e.metronome.GetRates(metronomeClient.GetRatesRequest{
+			RateCardID: cr.Spec.ForProvider.RateCardID,
+			At:         cr.Spec.ForProvider.StartingAt,
+			Selectors: []metronomeClient.RateSelector{{
+				PricingGroupValues: cr.Spec.ForProvider.PricingGroupValues,
+				ProductID:          cr.Spec.ForProvider.ProductID,
+			}},
+		}, nextPage)
+		if err != nil {
+			// the external name isn't valid
+			return managed.ExternalObservation{}, errors.Wrap(err, errGetRate)
+		}
+
+		if res == nil {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
-		return managed.ExternalObservation{}, errors.Wrap(err, errFailedToGetBillableMetric)
+
+		found := false
+		for _, r := range res.Data {
+			if e.isUpToDate(cr, &r) {
+				foundRate = &r
+				found = true
+			}
+		}
+		if found {
+			break
+		}
+
+		nextPage = res.NextPage
+		if nextPage == "" {
+			break
+		}
 	}
 
-	if metric == nil {
+	if foundRate == nil {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	if metric.ArchivedAt != "" {
-		return managed.ExternalObservation{ResourceExists: false}, nil
+	current := cr.Spec.ForProvider.DeepCopy()
+	if err := lateInitialize(&cr.Spec.ForProvider, foundRate); err != nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetRate)
 	}
+	isLateInitialized := !cmp.Equal(current, &cr.Spec.ForProvider)
 
-	converter := &metronomeClient.BillableMetricConverterImpl{}
-	cr.Status.AtProvider = *converter.FromBillableMetric(metric)
+	converter := &metronomeClient.RateConverterImpl{}
+	cr.Status.AtProvider = *converter.FromRate(foundRate)
 	cr.SetConditions(xpv1.Available())
 
-	upToDate, diff := isUpToDate(cr, metric)
-
 	return managed.ExternalObservation{
-		ResourceExists:   true,
-		ResourceUpToDate: upToDate,
-		Diff:             diff,
+		ResourceExists:          true,
+		ResourceUpToDate:        true,
+		ResourceLateInitialized: isLateInitialized,
 	}, nil
 }
 
 func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.BillableMetric)
+	cr, ok := mg.(*v1alpha1.Rate)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotBillableMetric)
+		return managed.ExternalCreation{}, errors.New(errNotRate)
 	}
 
 	e.logger.Debug("Creating")
 
-	converter := &metronomeClient.BillableMetricConverterImpl{}
-	req := converter.FromBillableMetricSpec(&cr.Spec.ForProvider)
+	converter := &metronomeClient.RateConverterImpl{}
+	req := converter.FromRateSpec(&cr.Spec.ForProvider)
 
-	res, err := e.metronome.CreateBillableMetric(*req)
+	_, err := e.metronome.AddRate(*req)
 	if err != nil {
-		return managed.ExternalCreation{}, errors.Wrap(err, errCreateBillableMetric)
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRate)
 	}
-	if res.Data.ID == "" {
-		return managed.ExternalCreation{}, errors.New("billable metric ID is missing")
-	}
-
-	meta.SetExternalName(cr, res.Data.ID)
 
 	return managed.ExternalCreation{}, nil
 }
 
 func (e *metronomeExternal) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v1alpha1.BillableMetric)
+	_, ok := mg.(*v1alpha1.Rate)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotBillableMetric)
+		return managed.ExternalUpdate{}, errors.New(errNotRate)
 	}
 
 	e.logger.Debug("Updating")
 
-	return managed.ExternalUpdate{}, errors.New("updating a billable metric is not supported")
+	return managed.ExternalUpdate{}, errors.New("updating a rate is not supported")
 }
 
 func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mg.(*v1alpha1.BillableMetric)
-	if !ok {
-		return managed.ExternalDelete{}, errors.New(errNotBillableMetric)
-	}
-
-	e.logger.Debug("Deleting")
-
-	id := meta.GetExternalName(cr)
-	if id == "" {
-		return managed.ExternalDelete{}, nil
-	}
-
-	_, err := e.metronome.ArchiveBillableMetric(id)
-	if err != nil {
-		if errors.Is(err, metronomeClient.ErrAlreadyArchived) {
-			return managed.ExternalDelete{}, nil
-		}
-		return managed.ExternalDelete{}, errors.Wrap(err, errArchiveBillableMetric)
-	}
-
 	return managed.ExternalDelete{}, nil
 }
 
-func isUpToDate(cr *v1alpha1.BillableMetric, metric *metronomeClient.BillableMetric) (bool, string) {
+func (e *metronomeExternal) isUpToDate(cr *v1alpha1.Rate, r *metronomeClient.Rate) bool {
 	spec := &cr.Spec.ForProvider
 
-	converter := &metronomeClient.BillableMetricConverterImpl{}
-	params := converter.FromBillableMetricToParameters(metric)
+	converter := &metronomeClient.RateConverterImpl{}
+	params := converter.FromRateToParameters(r)
 
-	sortPropertyFilter := func(a, b v1alpha1.PropertyFilter) int {
-		if a.Name < b.Name {
+	sortTiers := func(a, b v1alpha1.Tier) int {
+		if a.Price < b.Price {
 			return 1
+		} else if a.Price > b.Price {
+			return -1
+		} else {
+			if a.Size < b.Size {
+				return 1
+			} else if a.Size > b.Size {
+				return -1
+			}
 		}
-		if a.Name == b.Name {
-			return 0
-		}
-		return -1
+		return 0
 	}
 
-	slices.SortFunc(spec.PropertyFilters, sortPropertyFilter)
-	slices.SortFunc(params.PropertyFilters, sortPropertyFilter)
+	slices.SortFunc(spec.Tiers, sortTiers)
+	slices.SortFunc(params.Tiers, sortTiers)
+
+	// don't compare late initialized fields if they haven't been set
+	if spec.CreditTypeID == "" {
+		params.CreditTypeID = ""
+	}
 
 	opts := []cmp.Option{
 		cmpopts.EquateEmpty(),
+		cmpopts.IgnoreFields(v1alpha1.RateParameters{},
+			"RateCardID",
+		),
 	}
 
-	return cmp.Equal(spec, params, opts...), cmp.Diff(spec, params, opts...)
+	return cmp.Equal(spec, params, opts...)
+}
+
+func lateInitialize(in *v1alpha1.RateParameters, r *metronomeClient.Rate) error {
+	if in == nil || r == nil {
+		return nil
+	}
+	in.CreditTypeID = r.Details.CreditType.ID
+
+	return nil
 }

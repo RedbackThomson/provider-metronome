@@ -76,8 +76,7 @@ type ObservedBillableMetric struct {
 // BillableMetricSpec defines the desired state of a Release.
 type BillableMetricSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="forProvider is immutable"
-	ForProvider BillableMetricParameters `json:"forProvider"`
+	ForProvider       BillableMetricParameters `json:"forProvider"`
 }
 
 // BillableMetricStatus represents the observed state of a Release.

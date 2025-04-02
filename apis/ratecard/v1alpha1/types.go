@@ -61,8 +61,7 @@ type ObservedRateCard struct {
 // RateCardSpec defines the desired state of a Release.
 type RateCardSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="forProvider is immutable"
-	ForProvider RateCardParameters `json:"forProvider"`
+	ForProvider       RateCardParameters `json:"forProvider"`
 }
 
 // RateCardStatus represents the observed state of a Release.

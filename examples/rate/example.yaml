@@ -1,0 +1,14 @@
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: Rate
+metadata:
+  name: example-rate
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    rate_card_id: 9904c5df-2d8c-4533-acf0-859f7ae3b5ce
+    product_id: c76c1a94-9aaa-447b-bfcf-615fbf10ec52
+    starting_at: '2024-01-01T00:00:00.000Z'
+    entitled: true
+    rate_type: FLAT
+    price: 120

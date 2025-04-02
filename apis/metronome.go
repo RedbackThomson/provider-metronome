@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	billablemetricv1alpha1 "github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
+	ratev1alpha1 "github.com/redbackthomson/provider-metronome/apis/rate/v1alpha1"
 	ratecardv1alpha1 "github.com/redbackthomson/provider-metronome/apis/ratecard/v1alpha1"
 	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
 )
@@ -31,6 +32,7 @@ func init() {
 		metronomev1alpha1.SchemeBuilder.AddToScheme,
 		billablemetricv1alpha1.SchemeBuilder.AddToScheme,
 		ratecardv1alpha1.SchemeBuilder.AddToScheme,
+		ratev1alpha1.SchemeBuilder.AddToScheme,
 	)
 }
 

@@ -48,9 +48,9 @@ const (
 	errGetProviderConfig    = "cannot get provider config"
 	errGetCreds             = "failed to create credentials from provider config"
 	errFailedToTrackUsage   = "cannot track provider config usage"
-	errGetRateCard          = "failed to get billable metric"
-	errCreateRateCard       = "cannot create billable metric"
-	errArchiveRateCard      = "cannot archive billable metric"
+	errGetRateCard          = "failed to get rate card"
+	errCreateRateCard       = "cannot create rate card"
+	errArchiveRateCard      = "cannot archive rate card"
 )
 
 // Setup adds a controller that reconciles Release managed resources.
@@ -171,7 +171,7 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 	})
 	if err != nil {
 		// the external name isn't valid
-		if errors.Is(err, metronomeClient.ErrInvalidName) {
+		if errors.Is(err, metronomeClient.ErrRateCardInvalidName) {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errGetRateCard)
