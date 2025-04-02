@@ -18,9 +18,10 @@ package metronome
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 type CreateCustomerRequest struct {
@@ -96,6 +97,9 @@ func (c *Client) CreateCustomer(reqData CreateCustomerRequest) (*CreateCustomerR
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to create customer")
+		}
 		return nil, errors.New("failed to create customer: " + resp.Status)
 	}
 
@@ -122,6 +126,9 @@ func (c *Client) GetCustomer(customerID string) (*GetCustomerResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to get customer")
+		}
 		return nil, errors.New("failed to get customer: " + resp.Status)
 	}
 
@@ -152,6 +159,9 @@ func (c *Client) UpdateCustomerAliases(customerID string, reqData UpdateAliasesR
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return errors.Wrap(c, "failed to update customer aliases")
+		}
 		return errors.New("failed to update customer aliases: " + resp.Status)
 	}
 
@@ -172,6 +182,9 @@ func (c *Client) ListCustomers() (*ListCustomersResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to list customers")
+		}
 		return nil, errors.New("failed to list customers: " + resp.Status)
 	}
 

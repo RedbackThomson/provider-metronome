@@ -18,9 +18,15 @@ package metronome
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/pkg/errors"
+)
+
+var (
+	ErrContractInvalidName = errors.New("invalid contract name")
+	ErrCustomerInvalidName = errors.New("invalid contract name")
 )
 
 type GetContractRequest struct {
@@ -69,11 +75,11 @@ type GetContractResponse struct {
 	Data Contract `json:"data"`
 }
 
-type ListCustomerContractsRequest struct {
+type ListContractsRequest struct {
 	CustomerID string `json:"customer_id"`
 }
 
-type ListCustomerContractsResponse struct {
+type ListContractsResponse struct {
 	Data []Contract `json:"data"`
 }
 
@@ -81,7 +87,10 @@ func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, 
 	url := fmt.Sprintf("%s/v2/contracts/get", c.baseURL)
 
 	if !IsUUID(reqData.ContractID) {
-		return nil, ErrInvalidName
+		return nil, ErrContractInvalidName
+	}
+	if !IsUUID(reqData.CustomerID) {
+		return nil, ErrCustomerInvalidName
 	}
 
 	jsonData, err := json.Marshal(reqData)
@@ -101,6 +110,9 @@ func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to get contract")
+		}
 		return nil, errors.New("failed to get contract: " + resp.Status)
 	}
 
@@ -112,7 +124,7 @@ func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, 
 	return &response, nil
 }
 
-func (c *Client) ListCustomerContracts(reqData ListCustomerContractsRequest) (*ListCustomerContractsResponse, error) {
+func (c *Client) ListContracts(reqData ListContractsRequest) (*ListContractsResponse, error) {
 	url := fmt.Sprintf("%s/v2/contracts/list", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
@@ -131,10 +143,13 @@ func (c *Client) ListCustomerContracts(reqData ListCustomerContractsRequest) (*L
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("failed to list customer contracts: " + resp.Status)
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to list contracts")
+		}
+		return nil, errors.New("failed to list contracts: " + resp.Status)
 	}
 
-	var response ListCustomerContractsResponse
+	var response ListContractsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, err
 	}

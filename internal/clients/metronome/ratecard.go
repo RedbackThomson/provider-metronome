@@ -18,11 +18,16 @@ package metronome
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"github.com/redbackthomson/provider-metronome/apis/ratecard/v1alpha1"
+)
+
+var (
+	ErrRateCardInvalidName = errors.New("invalid rate card name")
 )
 
 type GetRateCardRequest struct {
@@ -89,7 +94,7 @@ func (c *Client) GetRateCard(reqData GetRateCardRequest) (*GetRateCardResponse, 
 	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/get", c.baseURL)
 
 	if !IsUUID(reqData.ID) {
-		return nil, ErrInvalidName
+		return nil, ErrRateCardInvalidName
 	}
 
 	jsonData, err := json.Marshal(reqData)
@@ -109,6 +114,9 @@ func (c *Client) GetRateCard(reqData GetRateCardRequest) (*GetRateCardResponse, 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to get rate card")
+		}
 		return nil, errors.New("failed to get rate card: " + resp.Status)
 	}
 
@@ -139,6 +147,9 @@ func (c *Client) CreateRateCard(reqData CreateRateCardRequest) (*CreateRateCardR
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to create rate card")
+		}
 		return nil, errors.New("failed to create rate card: " + resp.Status)
 	}
 
@@ -154,7 +165,7 @@ func (c *Client) UpdateRateCard(reqData UpdateRateCardRequest) (*UpdateRateCardR
 	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/update", c.baseURL)
 
 	if !IsUUID(reqData.RateCardID) {
-		return nil, ErrInvalidName
+		return nil, ErrRateCardInvalidName
 	}
 
 	jsonData, err := json.Marshal(reqData)
@@ -174,6 +185,9 @@ func (c *Client) UpdateRateCard(reqData UpdateRateCardRequest) (*UpdateRateCardR
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to update rate card")
+		}
 		return nil, errors.New("failed to update rate card: " + resp.Status)
 	}
 

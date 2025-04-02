@@ -30,8 +30,8 @@ import (
 )
 
 var (
-	ErrInvalidName     = errors.New("invalid billable metric name")
-	ErrAlreadyArchived = errors.New("billable metric already archived")
+	ErrBillableMetricInvalidName = errors.New("invalid billable metric name")
+	ErrAlreadyArchived           = errors.New("billable metric already archived")
 )
 
 const (
@@ -138,6 +138,9 @@ func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*Cre
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, fmt.Errorf("failed to create billable metric: %s", c.Message)
+		}
 		return nil, fmt.Errorf("failed to create billable metric: %s", resp.Status)
 	}
 
@@ -154,7 +157,7 @@ func (c *Client) GetBillableMetric(id string) (*BillableMetric, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
 	if !IsUUID(id) {
-		return nil, ErrInvalidName
+		return nil, ErrBillableMetricInvalidName
 	}
 
 	req, err := c.newAuthenticatedRequest("GET", url, nil)
@@ -169,6 +172,9 @@ func (c *Client) GetBillableMetric(id string) (*BillableMetric, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, fmt.Errorf("failed to get billable metric: %s", c.Message)
+		}
 		return nil, fmt.Errorf("failed to get billable metric: %s", resp.Status)
 	}
 
@@ -198,6 +204,9 @@ func (c *Client) ListBillableMetrics() (*ListBillableMetricsResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, fmt.Errorf("failed to list billable metrics: %s", c.Message)
+		}
 		return nil, fmt.Errorf("failed to list billable metrics: %s", resp.Status)
 	}
 
@@ -214,7 +223,7 @@ func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricReq
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
 	if !IsUUID(id) {
-		return nil, ErrInvalidName
+		return nil, ErrBillableMetricInvalidName
 	}
 
 	jsonData, err := json.Marshal(reqData)
@@ -234,6 +243,9 @@ func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricReq
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, fmt.Errorf("failed to update billable metric: %s", c.Message)
+		}
 		return nil, fmt.Errorf("failed to update billable metric: %s", resp.Status)
 	}
 
@@ -250,7 +262,7 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 	url := fmt.Sprintf("%s/v1/billable-metrics/archive", c.baseURL)
 
 	if !IsUUID(id) {
-		return nil, ErrInvalidName
+		return nil, ErrBillableMetricInvalidName
 	}
 
 	// Prepare the request payload
@@ -275,8 +287,11 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 
 	// Check for a successful response
 	if resp.StatusCode != http.StatusOK {
-		if IsClientError(resp.Body, errBillableMetricAlreadyArchived) {
-			return nil, ErrAlreadyArchived
+		if c := ParseClientError(resp.Body); c != nil {
+			if c.Message == errBillableMetricAlreadyArchived {
+				return nil, ErrAlreadyArchived
+			}
+			return nil, fmt.Errorf("failed to archive billable metric: %s", c.Message)
 		}
 		return nil, fmt.Errorf("failed to archive billable metric: %s", resp.Status)
 	}
