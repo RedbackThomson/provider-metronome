@@ -34,27 +34,27 @@ type GetContractRequest struct {
 	ContractID string `json:"contract_id"`
 }
 
-type Product struct {
+type ProductIdentifier struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
 type Commit struct {
-	ID                   string   `json:"id"`
-	Type                 string   `json:"type"`
-	Name                 string   `json:"name"`
-	Description          string   `json:"description"`
-	Product              Product  `json:"product"`
-	RolloverFraction     float64  `json:"rollover_fraction"`
-	ApplicableProductIDs []string `json:"applicable_product_ids"`
+	ID                   string            `json:"id"`
+	Type                 string            `json:"type"`
+	Name                 string            `json:"name"`
+	Description          string            `json:"description"`
+	Product              ProductIdentifier `json:"product"`
+	RolloverFraction     float64           `json:"rollover_fraction"`
+	ApplicableProductIDs []string          `json:"applicable_product_ids"`
 }
 
 type Override struct {
-	ID         string  `json:"id"`
-	Product    Product `json:"product"`
-	StartingAt string  `json:"starting_at"`
-	Type       string  `json:"type"`
-	Multiplier float64 `json:"multiplier"`
+	ID         string            `json:"id"`
+	Product    ProductIdentifier `json:"product"`
+	StartingAt string            `json:"starting_at"`
+	Type       string            `json:"type"`
+	Multiplier float64           `json:"multiplier"`
 }
 
 type Contract struct {

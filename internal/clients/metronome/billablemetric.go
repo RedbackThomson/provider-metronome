@@ -22,16 +22,12 @@ import (
 	"fmt"
 	"net/http"
 
-	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-
 	"github.com/google/uuid"
-	"github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
 )
 
 var (
-	ErrBillableMetricInvalidName = errors.New("invalid billable metric name")
-	ErrAlreadyArchived           = errors.New("billable metric already archived")
+	ErrBillableMetricInvalidName     = errors.New("invalid billable metric name")
+	ErrBillableMetricAlreadyArchived = errors.New("billable metric already archived")
 )
 
 const (
@@ -111,11 +107,7 @@ type ArchiveBillableMetricRequest struct {
 }
 
 // ArchiveBillableMetricResponse represents the response for archiving a billable metric.
-type ArchiveBillableMetricResponse struct {
-	Data struct {
-		ID string `json:"id"` // ID of the archived billable metric
-	} `json:"data"`
-}
+type ArchiveBillableMetricResponse DataID
 
 // CreateBillableMetric creates a new billable metric.
 func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
@@ -289,7 +281,7 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
 			if c.Message == errBillableMetricAlreadyArchived {
-				return nil, ErrAlreadyArchived
+				return nil, ErrBillableMetricAlreadyArchived
 			}
 			return nil, fmt.Errorf("failed to archive billable metric: %s", c.Message)
 		}
@@ -307,34 +299,4 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 
 func IsUUID(s string) bool {
 	return uuid.Validate(s) == nil
-}
-
-// BillableMetricConverter helps to convert Metronome client types to api types
-// of this provider and vise-versa From & To shall both be defined for each type
-// conversion, to prevent divergence from Metronome client Types
-// goverter:converter
-// goverter:useZeroValueOnPointerInconsistency
-// goverter:ignoreUnexported
-// goverter:extend ExtV1JSONToRuntimeRawExtension
-// goverter:enum:unknown @ignore
-// goverter:struct:comment // +k8s:deepcopy-gen=false
-// goverter:output:file ./zz_generated.billablemetric.conversion.go
-// +k8s:deepcopy-gen=false
-type BillableMetricConverter interface {
-	FromBillableMetricSpec(in *v1alpha1.BillableMetricParameters) *CreateBillableMetricRequest
-	ToBillableMetricSpec(in *CreateBillableMetricRequest) *v1alpha1.BillableMetricParameters
-
-	FromBillableMetric(in *BillableMetric) *v1alpha1.ObservedBillableMetric
-	ToBillableMetric(in *v1alpha1.ObservedBillableMetric) *BillableMetric
-
-	// goverter:ignoreMissing
-	FromBillableMetricToParameters(in *BillableMetric) *v1alpha1.BillableMetricParameters
-}
-
-// ExtV1JSONToRuntimeRawExtension converts an extv1.JSON into a
-// *runtime.RawExtension.
-func ExtV1JSONToRuntimeRawExtension(in extv1.JSON) *runtime.RawExtension {
-	return &runtime.RawExtension{
-		Raw: in.Raw,
-	}
 }

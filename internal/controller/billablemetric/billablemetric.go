@@ -40,6 +40,7 @@ import (
 	"github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
 	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
 	metronomeClient "github.com/redbackthomson/provider-metronome/internal/clients/metronome"
+	"github.com/redbackthomson/provider-metronome/internal/converters"
 )
 
 const (
@@ -53,7 +54,7 @@ const (
 	errArchiveBillableMetric     = "cannot archive billable metric"
 )
 
-// Setup adds a controller that reconciles Release managed resources.
+// Setup adds a controller that reconciles BillableMetric managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 	name := managed.ControllerName(v1alpha1.BillableMetricGroupKind)
 
@@ -178,7 +179,7 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	converter := &metronomeClient.BillableMetricConverterImpl{}
+	converter := &converters.BillableMetricConverterImpl{}
 	cr.Status.AtProvider = *converter.FromBillableMetric(metric)
 	cr.SetConditions(xpv1.Available())
 
@@ -199,7 +200,7 @@ func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (ma
 
 	e.logger.Debug("Creating")
 
-	converter := &metronomeClient.BillableMetricConverterImpl{}
+	converter := &converters.BillableMetricConverterImpl{}
 	req := converter.FromBillableMetricSpec(&cr.Spec.ForProvider)
 
 	res, err := e.metronome.CreateBillableMetric(*req)
@@ -241,7 +242,7 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 
 	_, err := e.metronome.ArchiveBillableMetric(id)
 	if err != nil {
-		if errors.Is(err, metronomeClient.ErrAlreadyArchived) {
+		if errors.Is(err, metronomeClient.ErrBillableMetricAlreadyArchived) {
 			return managed.ExternalDelete{}, nil
 		}
 		return managed.ExternalDelete{}, errors.Wrap(err, errArchiveBillableMetric)
@@ -253,7 +254,7 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 func isUpToDate(cr *v1alpha1.BillableMetric, metric *metronomeClient.BillableMetric) (bool, string) {
 	spec := &cr.Spec.ForProvider
 
-	converter := &metronomeClient.BillableMetricConverterImpl{}
+	converter := &converters.BillableMetricConverterImpl{}
 	params := converter.FromBillableMetricToParameters(metric)
 
 	sortPropertyFilter := func(a, b v1alpha1.PropertyFilter) int {

@@ -22,7 +22,6 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/redbackthomson/provider-metronome/apis/rate/v1alpha1"
 )
 
 var (
@@ -205,37 +204,4 @@ func (c *Client) AddRate(reqData AddRateRequest) (*AddRateResponse, error) {
 	}
 
 	return &response, nil
-}
-
-// RateConverter helps to convert Metronome client types to api types
-// of this provider and vise-versa From & To shall both be defined for each type
-// conversion, to prevent divergence from Metronome client Types
-// goverter:converter
-// goverter:useZeroValueOnPointerInconsistency
-// goverter:ignoreUnexported
-// goverter:extend ExtV1JSONToRuntimeRawExtension
-// goverter:enum:unknown @ignore
-// goverter:struct:comment // +k8s:deepcopy-gen=false
-// goverter:output:file ./zz_generated.rate.conversion.go
-// +k8s:deepcopy-gen=false
-type RateConverter interface {
-	FromRateSpec(in *v1alpha1.RateParameters) *AddRateRequest
-
-	// goverter:ignore RateCardRef RateCardSelector
-	ToRateSpec(in *AddRateRequest) *v1alpha1.RateParameters
-
-	FromRate(in *Rate) *v1alpha1.ObservedRate
-	ToRate(in *v1alpha1.ObservedRate) *Rate
-
-	// goverter:ignoreMissing
-	// goverter:ignore RateCardID
-	// goverter:map Details.RateType RateType
-	// goverter:map Details.IsProrated IsProrated
-	// goverter:map Details.Price Price
-	// goverter:map Details.PricingGroupValues PricingGroupValues
-	// goverter:map Details.Quantity Quantity
-	// goverter:map Details.Tiers Tiers
-	// goverter:map Details.UseListPrices UseListPrices
-	// goverter:map Details.CreditType.ID CreditTypeID
-	FromRateToParameters(in *Rate) *v1alpha1.RateParameters
 }

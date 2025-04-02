@@ -40,6 +40,7 @@ import (
 	"github.com/redbackthomson/provider-metronome/apis/ratecard/v1alpha1"
 	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
 	metronomeClient "github.com/redbackthomson/provider-metronome/internal/clients/metronome"
+	"github.com/redbackthomson/provider-metronome/internal/converters"
 )
 
 const (
@@ -53,7 +54,7 @@ const (
 	errArchiveRateCard      = "cannot archive rate card"
 )
 
-// Setup adds a controller that reconciles Release managed resources.
+// Setup adds a controller that reconciles RateCard managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 	name := managed.ControllerName(v1alpha1.RateCardGroupKind)
 
@@ -183,7 +184,7 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 
 	card := &res.Data
 
-	converter := &metronomeClient.RateCardConverterImpl{}
+	converter := &converters.RateCardConverterImpl{}
 	cr.Status.AtProvider = *converter.FromRateCard(card)
 	cr.SetConditions(xpv1.Available())
 
@@ -204,7 +205,7 @@ func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (ma
 
 	e.logger.Debug("Creating")
 
-	converter := &metronomeClient.RateCardConverterImpl{}
+	converter := &converters.RateCardConverterImpl{}
 	req := converter.FromRateCardSpec(&cr.Spec.ForProvider)
 
 	res, err := e.metronome.CreateRateCard(*req)
@@ -238,7 +239,7 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 func isUpToDate(cr *v1alpha1.RateCard, metric *metronomeClient.RateCard) (bool, string) {
 	spec := &cr.Spec.ForProvider
 
-	converter := &metronomeClient.RateCardConverterImpl{}
+	converter := &converters.RateCardConverterImpl{}
 	params := converter.FromRateCardToParameters(metric)
 
 	sortAliases := func(a, b v1alpha1.RateCardAlias) int {

@@ -39,6 +39,7 @@ import (
 	"github.com/redbackthomson/provider-metronome/apis/rate/v1alpha1"
 	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
 	metronomeClient "github.com/redbackthomson/provider-metronome/internal/clients/metronome"
+	"github.com/redbackthomson/provider-metronome/internal/converters"
 )
 
 const (
@@ -52,7 +53,7 @@ const (
 	errArchiveRate          = "cannot archive rate"
 )
 
-// Setup adds a controller that reconciles Release managed resources.
+// Setup adds a controller that reconciles Rate managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 	name := managed.ControllerName(v1alpha1.RateGroupKind)
 
@@ -213,7 +214,7 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 	}
 	isLateInitialized := !cmp.Equal(current, &cr.Spec.ForProvider)
 
-	converter := &metronomeClient.RateConverterImpl{}
+	converter := &converters.RateConverterImpl{}
 	cr.Status.AtProvider = *converter.FromRate(foundRate)
 	cr.SetConditions(xpv1.Available())
 
@@ -232,7 +233,7 @@ func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (ma
 
 	e.logger.Debug("Creating")
 
-	converter := &metronomeClient.RateConverterImpl{}
+	converter := &converters.RateConverterImpl{}
 	req := converter.FromRateSpec(&cr.Spec.ForProvider)
 
 	_, err := e.metronome.AddRate(*req)
@@ -261,7 +262,7 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 func (e *metronomeExternal) isUpToDate(cr *v1alpha1.Rate, r *metronomeClient.Rate) bool {
 	spec := &cr.Spec.ForProvider
 
-	converter := &metronomeClient.RateConverterImpl{}
+	converter := &converters.RateConverterImpl{}
 	params := converter.FromRateToParameters(r)
 
 	sortTiers := func(a, b v1alpha1.Tier) int {

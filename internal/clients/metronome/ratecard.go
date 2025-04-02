@@ -22,8 +22,6 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-
-	"github.com/redbackthomson/provider-metronome/apis/ratecard/v1alpha1"
 )
 
 var (
@@ -75,11 +73,7 @@ type UpdateRateCardRequest struct {
 	Description string `json:"description"`
 }
 
-type UpdateRateCardResponse struct {
-	Data struct {
-		ID string `json:"id"`
-	} `json:"data"`
-}
+type UpdateRateCardResponse DataID
 
 type FiatCreditType struct {
 	ID   string `json:"id"`
@@ -197,26 +191,4 @@ func (c *Client) UpdateRateCard(reqData UpdateRateCardRequest) (*UpdateRateCardR
 	}
 
 	return &response, nil
-}
-
-// RateCardConverter helps to convert Metronome client types to api types
-// of this provider and vise-versa From & To shall both be defined for each type
-// conversion, to prevent divergence from Metronome client Types
-// goverter:converter
-// goverter:useZeroValueOnPointerInconsistency
-// goverter:ignoreUnexported
-// goverter:extend ExtV1JSONToRuntimeRawExtension
-// goverter:enum:unknown @ignore
-// goverter:struct:comment // +k8s:deepcopy-gen=false
-// goverter:output:file ./zz_generated.ratecard.conversion.go
-// +k8s:deepcopy-gen=false
-type RateCardConverter interface {
-	FromRateCardSpec(in *v1alpha1.RateCardParameters) *CreateRateCardRequest
-	ToRateCardSpec(in *CreateRateCardRequest) *v1alpha1.RateCardParameters
-
-	FromRateCard(in *RateCard) *v1alpha1.ObservedRateCard
-	ToRateCard(in *v1alpha1.ObservedRateCard) *RateCard
-
-	// goverter:ignoreMissing
-	FromRateCardToParameters(in *RateCard) *v1alpha1.RateCardParameters
 }
