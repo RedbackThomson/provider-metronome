@@ -20,6 +20,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
 )
 
 // EventTypeFilter defines the filter based on event types.
@@ -31,30 +36,46 @@ type EventTypeFilter struct {
 // PropertyFilter defines a filter on properties.
 type PropertyFilter struct {
 	Name        string   `json:"name"`
-	Exists      bool     `json:"exists"`
+	Exists      *bool    `json:"exists,omitempty"`
 	InValues    []string `json:"in_values,omitempty"`
 	NotInValues []string `json:"not_in_values,omitempty"`
 }
 
+type AggregationType string
+
+const (
+	AggregationCount  = "count"
+	AggregationLatest = "latest"
+	AggregationMax    = "max"
+	AggregationSum    = "sum"
+	AggregationUnique = "unique"
+)
+
 // CreateBillableMetricRequest represents the request payload for creating a billable metric.
 type CreateBillableMetricRequest struct {
-	Name            string           `json:"name"`
-	EventTypeFilter EventTypeFilter  `json:"event_type_filter"`
-	PropertyFilters []PropertyFilter `json:"property_filters"`
-	AggregationType string           `json:"aggregation_type"`
-	AggregationKey  string           `json:"aggregation_key,omitempty"`
-	GroupKeys       [][]string       `json:"group_keys"`
+	Name            string            `json:"name"`
+	AggregationType AggregationType   `json:"aggregation_type"`
+	AggregationKey  string            `json:"aggregation_key"`
+	EventTypeFilter EventTypeFilter   `json:"event_type_filter"`
+	PropertyFilters []PropertyFilter  `json:"property_filters"`
+	GroupKeys       [][]string        `json:"group_keys"`
+	CustomFields    map[string]string `json:"custom_fields,omitempty"`
+	SQL             string            `json:"sql,omitempty"`
 }
 
 // BillableMetric represents the data structure of a billable metric.
 type BillableMetric struct {
-	ID              string           `json:"id"`
-	Name            string           `json:"name"`
-	EventTypeFilter EventTypeFilter  `json:"event_type_filter"`
-	PropertyFilters []PropertyFilter `json:"property_filters"`
-	AggregationType string           `json:"aggregation_type"`
-	AggregationKey  string           `json:"aggregation_key,omitempty"`
-	GroupKeys       [][]string       `json:"group_keys"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// +kubebuilder:validation:Enum=count;latest;max;sum;unique
+	AggregationType AggregationType   `json:"aggregation_type"`
+	AggregationKey  string            `json:"aggregation_key,omitempty"`
+	EventTypeFilter EventTypeFilter   `json:"event_type_filter"`
+	PropertyFilters []PropertyFilter  `json:"property_filters"`
+	GroupKeys       [][]string        `json:"group_keys"`
+	CustomFields    map[string]string `json:"custom_fields,omitempty"`
+	SQL             string            `json:"sql,omitempty"`
+	ArchivedAt      string            `json:"archived_at,omitempty"`
 }
 
 // CreateBillableMetricResponse represents the response for creating a billable metric.
@@ -241,4 +262,32 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 	}
 
 	return &response, nil
+}
+
+// BillableMetricConverter helps to convert Metronome client types to api types
+// of this provider and vise-versa From & To shall both be defined for each type
+// conversion, to prevent
+// divergence from Metronome client Types
+// goverter:converter
+// goverter:useZeroValueOnPointerInconsistency
+// goverter:ignoreUnexported
+// goverter:extend ExtV1JSONToRuntimeRawExtension
+// goverter:enum:unknown @ignore
+// goverter:struct:comment // +k8s:deepcopy-gen=false
+// goverter:output:file ./zz_generated.billablemetric.conversion.go
+// +k8s:deepcopy-gen=false
+type BillableMetricConverter interface {
+	FromBillableMetricSpec(in *v1alpha1.BillableMetricParameters) *CreateBillableMetricRequest
+	ToBillableMetricSpec(in *CreateBillableMetricRequest) *v1alpha1.BillableMetricParameters
+
+	FromBillableMetric(in *BillableMetric) *v1alpha1.ObservedBillableMetric
+	ToBillableMetric(in *v1alpha1.ObservedBillableMetric) *BillableMetric
+}
+
+// ExtV1JSONToRuntimeRawExtension converts an extv1.JSON into a
+// *runtime.RawExtension.
+func ExtV1JSONToRuntimeRawExtension(in extv1.JSON) *runtime.RawExtension {
+	return &runtime.RawExtension{
+		Raw: in.Raw,
+	}
 }

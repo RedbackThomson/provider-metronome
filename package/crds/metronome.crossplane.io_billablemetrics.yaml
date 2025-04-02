@@ -68,11 +68,17 @@ spec:
                 - Delete
                 type: string
               forProvider:
+                description: BillableMetricParameters represents the request payload
+                  for creating a billable metric.
                 properties:
                   aggregation_key:
                     type: string
                   aggregation_type:
                     type: string
+                  custom_fields:
+                    additionalProperties:
+                      type: string
+                    type: object
                   event_type_filter:
                     description: EventTypeFilter defines the filter based on event
                       types.
@@ -111,11 +117,13 @@ spec:
                             type: string
                           type: array
                       required:
-                      - exists
                       - name
                       type: object
                     type: array
+                  sql:
+                    type: string
                 required:
+                - aggregation_key
                 - aggregation_type
                 - event_type_filter
                 - group_keys
@@ -298,11 +306,25 @@ spec:
             description: BillableMetricStatus represents the observed state of a Release.
             properties:
               atProvider:
+                description: ObservedBillableMetric represents the data structure
+                  of a billable metric.
                 properties:
                   aggregation_key:
                     type: string
                   aggregation_type:
+                    enum:
+                    - count
+                    - latest
+                    - max
+                    - sum
+                    - unique
                     type: string
+                  archived_at:
+                    type: string
+                  custom_fields:
+                    additionalProperties:
+                      type: string
+                    type: object
                   event_type_filter:
                     description: EventTypeFilter defines the filter based on event
                       types.
@@ -343,10 +365,11 @@ spec:
                             type: string
                           type: array
                       required:
-                      - exists
                       - name
                       type: object
                     type: array
+                  sql:
+                    type: string
                 required:
                 - aggregation_type
                 - event_type_filter

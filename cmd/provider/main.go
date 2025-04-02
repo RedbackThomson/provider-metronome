@@ -56,7 +56,7 @@ func main() {
 
 		enableManagementPolicies = app.Flag("enable-management-policies", "Enable support for Management Policies.").Default("true").Envar("ENABLE_MANAGEMENT_POLICIES").Bool()
 
-		metronomeBaseUrl = app.Flag("metronome-base-url", "Base URL to use for all Metronome API requests").Default("https://api.metronome.com/").Envar("METRONOME_BASE_URL")
+		metronomeBaseUrl = app.Flag("metronome-base-url", "Base URL to use for all Metronome API requests").Default("https://api.metronome.com/").Envar("METRONOME_BASE_URL").String()
 	)
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
@@ -121,7 +121,7 @@ func main() {
 		log.Info("Beta feature enabled", "flag", feature.EnableBetaManagementPolicies)
 	}
 
-	kingpin.FatalIfError(metronomeControllers.Setup(mgr, o, *metronomeBaseUrl.String()), "Cannot setup Template controllers")
+	kingpin.FatalIfError(metronomeControllers.Setup(mgr, o, *metronomeBaseUrl), "Cannot setup Template controllers")
 	kingpin.FatalIfError(mgr.Start(ctrl.SetupSignalHandler()), "Cannot start controller manager")
 }
 

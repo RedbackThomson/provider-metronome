@@ -19,6 +19,7 @@ package billablemetric
 import (
 	"context"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -28,21 +29,23 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/feature"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 
 	"github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
 	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
-	metronomeClient "github.com/redbackthomson/provider-metronome/internal/client/metronome"
+	metronomeClient "github.com/redbackthomson/provider-metronome/internal/clients/metronome"
 )
 
 const (
-	errNotBillableMetric    = "managed resource is not a BillableMetric custom resource"
-	errProviderConfigNotSet = "provider config is not set"
-	errGetProviderConfig    = "cannot get provider config"
-	errGetCreds             = "failed to create credentials from provider config"
-	errFailedToTrackUsage   = "cannot track provider config usage"
+	errNotBillableMetric         = "managed resource is not a BillableMetric custom resource"
+	errProviderConfigNotSet      = "provider config is not set"
+	errGetProviderConfig         = "cannot get provider config"
+	errGetCreds                  = "failed to create credentials from provider config"
+	errFailedToTrackUsage        = "cannot track provider config usage"
+	errFailedToGetBillableMetric = "failed to get billable metric"
 )
 
 // Setup adds a controller that reconciles Release managed resources.
@@ -141,16 +144,29 @@ func (e *metronomeExternal) Disconnect(ctx context.Context) error {
 }
 
 func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	// cr, ok := mg.(*v1alpha1.BillableMetric)
-	// if !ok {
-	// 	return managed.ExternalObservation{}, errors.New(errNotBillableMetric)
-	// }
+	cr, ok := mg.(*v1alpha1.BillableMetric)
+	if !ok {
+		return managed.ExternalObservation{}, errors.New(errNotBillableMetric)
+	}
 
 	e.logger.Debug("Observing")
 
+	id := meta.GetExternalName(cr)
+	if id == "" {
+		return managed.ExternalObservation{}, nil
+	}
+
+	metric, err := e.metronome.GetBillableMetric(id)
+	if err != nil || metric == nil {
+		return managed.ExternalObservation{}, errors.Wrap(err, errFailedToGetBillableMetric)
+	}
+
+	converter := &metronomeClient.BillableMetricConverterImpl{}
+	cr.Status.AtProvider = *converter.FromBillableMetric(metric)
+
 	return managed.ExternalObservation{
-		ResourceExists: true,
-		// ResourceUpToDate:  cr.Status.Synced && !(shouldRollBack(cr) && !rollBackLimitReached(cr)),
+		ResourceExists:   true,
+		ResourceUpToDate: isBillableMetricUpToDate(cr, metric),
 	}, nil
 }
 
@@ -184,4 +200,12 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 	e.logger.Debug("Deleting")
 
 	return managed.ExternalDelete{}, nil
+}
+
+func isBillableMetricUpToDate(cr *v1alpha1.BillableMetric, metric *metronomeClient.BillableMetric) bool {
+	spec := cr.Spec.ForProvider
+
+	opts := []cmp.Option{}
+
+	return cmp.Equal(spec, metric, opts...)
 }

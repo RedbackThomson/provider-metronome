@@ -31,28 +31,46 @@ type EventTypeFilter struct {
 // PropertyFilter defines a filter on properties.
 type PropertyFilter struct {
 	Name        string   `json:"name"`
-	Exists      bool     `json:"exists"`
+	Exists      *bool    `json:"exists,omitempty"`
 	InValues    []string `json:"in_values,omitempty"`
 	NotInValues []string `json:"not_in_values,omitempty"`
 }
 
+type AggregationType string
+
+const (
+	AggregationCount  = "count"
+	AggregationLatest = "latest"
+	AggregationMax    = "max"
+	AggregationSum    = "sum"
+	AggregationUnique = "unique"
+)
+
+// BillableMetricParameters represents the request payload for creating a billable metric.
 type BillableMetricParameters struct {
-	Name            string           `json:"name"`
-	EventTypeFilter EventTypeFilter  `json:"event_type_filter"`
-	PropertyFilters []PropertyFilter `json:"property_filters"`
-	AggregationType string           `json:"aggregation_type"`
-	AggregationKey  string           `json:"aggregation_key,omitempty"`
-	GroupKeys       [][]string       `json:"group_keys"`
+	Name            string            `json:"name"`
+	AggregationType AggregationType   `json:"aggregation_type"`
+	AggregationKey  string            `json:"aggregation_key"`
+	EventTypeFilter EventTypeFilter   `json:"event_type_filter"`
+	PropertyFilters []PropertyFilter  `json:"property_filters"`
+	GroupKeys       [][]string        `json:"group_keys"`
+	CustomFields    map[string]string `json:"custom_fields,omitempty"`
+	SQL             string            `json:"sql,omitempty"`
 }
 
-type BillableMetricObservation struct {
-	ID              string           `json:"id"`
-	Name            string           `json:"name"`
-	EventTypeFilter EventTypeFilter  `json:"event_type_filter"`
-	PropertyFilters []PropertyFilter `json:"property_filters"`
-	AggregationType string           `json:"aggregation_type"`
-	AggregationKey  string           `json:"aggregation_key,omitempty"`
-	GroupKeys       [][]string       `json:"group_keys"`
+// ObservedBillableMetric represents the data structure of a billable metric.
+type ObservedBillableMetric struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// +kubebuilder:validation:Enum=count;latest;max;sum;unique
+	AggregationType AggregationType   `json:"aggregation_type"`
+	AggregationKey  string            `json:"aggregation_key,omitempty"`
+	EventTypeFilter EventTypeFilter   `json:"event_type_filter"`
+	PropertyFilters []PropertyFilter  `json:"property_filters"`
+	GroupKeys       [][]string        `json:"group_keys"`
+	CustomFields    map[string]string `json:"custom_fields,omitempty"`
+	SQL             string            `json:"sql,omitempty"`
+	ArchivedAt      string            `json:"archived_at,omitempty"`
 }
 
 // BillableMetricSpec defines the desired state of a Release.
@@ -66,10 +84,10 @@ type BillableMetricSpec struct {
 // BillableMetricStatus represents the observed state of a Release.
 type BillableMetricStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          BillableMetricObservation `json:"atProvider,omitempty"`
-	PatchesSha          string                    `json:"patchesSha,omitempty"`
-	Failed              int32                     `json:"failed,omitempty"`
-	Synced              bool                      `json:"synced,omitempty"`
+	AtProvider          ObservedBillableMetric `json:"atProvider,omitempty"`
+	PatchesSha          string                 `json:"patchesSha,omitempty"`
+	Failed              int32                  `json:"failed,omitempty"`
+	Synced              bool                   `json:"synced,omitempty"`
 }
 
 // +kubebuilder:object:root=true
