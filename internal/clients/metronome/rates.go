@@ -60,6 +60,11 @@ type AddRatesResponse struct {
 
 func (c *Client) GetRates(reqData GetRatesRequest) (*GetRatesResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/getRates", c.baseURL)
+
+	if !IsUUID(reqData.RateCardID) {
+		return nil, ErrInvalidName
+	}
+
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -90,6 +95,11 @@ func (c *Client) GetRates(reqData GetRatesRequest) (*GetRatesResponse, error) {
 
 func (c *Client) AddRates(reqData AddRatesRequest) (*AddRatesResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/addRates", c.baseURL)
+
+	if !IsUUID(reqData.RateCardID) {
+		return nil, ErrInvalidName
+	}
+
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err

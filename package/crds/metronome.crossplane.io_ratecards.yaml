@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
-  name: billablemetrics.metronome.crossplane.io
+  name: ratecards.metronome.crossplane.io
 spec:
   group: metronome.crossplane.io
   names:
@@ -12,10 +12,10 @@ spec:
     - crossplane
     - managed
     - metronome
-    kind: BillableMetric
-    listKind: BillableMetricList
-    plural: billablemetrics
-    singular: billablemetric
+    kind: RateCard
+    listKind: RateCardList
+    plural: ratecards
+    singular: ratecard
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -31,7 +31,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: BillableMetric represents a Metronome Billable Metric resource
+        description: RateCard represents a Metronome Rate Card resource
         properties:
           apiVersion:
             description: |-
@@ -51,7 +51,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: BillableMetricSpec defines the desired state of a Release.
+            description: RateCardSpec defines the desired state of a Release.
             properties:
               deletionPolicy:
                 default: Delete
@@ -68,67 +68,42 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: BillableMetricParameters represents the request payload
-                  for creating a billable metric.
+                description: RateCardParameters represents the request payload for
+                  creating a rate card.
                 properties:
-                  aggregation_key:
-                    type: string
-                  aggregation_type:
-                    type: string
-                  custom_fields:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  event_type_filter:
-                    description: EventTypeFilter defines the filter based on event
-                      types.
-                    properties:
-                      in_values:
-                        items:
-                          type: string
-                        type: array
-                      not_in_values:
-                        items:
-                          type: string
-                        type: array
-                    type: object
-                  group_keys:
+                  aliases:
                     items:
-                      items:
-                        type: string
-                      type: array
-                    type: array
-                  name:
-                    type: string
-                  property_filters:
-                    items:
-                      description: PropertyFilter defines a filter on properties.
                       properties:
-                        exists:
-                          type: boolean
-                        in_values:
-                          items:
-                            type: string
-                          type: array
                         name:
                           type: string
-                        not_in_values:
-                          items:
-                            type: string
-                          type: array
                       required:
                       - name
                       type: object
                     type: array
-                  sql:
+                  credit_type_conversions:
+                    items:
+                      properties:
+                        custom_credit_type_id:
+                          type: string
+                        fiat_per_custom_credit:
+                          type: string
+                      required:
+                      - custom_credit_type_id
+                      - fiat_per_custom_credit
+                      type: object
+                    type: array
+                  custom_fields:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  description:
+                    type: string
+                  fiat_credit_type_id:
+                    type: string
+                  name:
                     type: string
                 required:
-                - aggregation_key
-                - aggregation_type
-                - event_type_filter
-                - group_keys
                 - name
-                - property_filters
                 type: object
                 x-kubernetes-validations:
                 - message: forProvider is immutable
@@ -301,80 +276,50 @@ spec:
             - forProvider
             type: object
           status:
-            description: BillableMetricStatus represents the observed state of a Release.
+            description: RateCardStatus represents the observed state of a Release.
             properties:
               atProvider:
-                description: ObservedBillableMetric represents the data structure
-                  of a billable metric.
+                description: ObservedRateCard represents the data structure of a rate
+                  card.
                 properties:
-                  aggregation_key:
+                  aliases:
+                    items:
+                      properties:
+                        name:
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  created_at:
                     type: string
-                  aggregation_type:
-                    enum:
-                    - count
-                    - latest
-                    - max
-                    - sum
-                    - unique
-                    type: string
-                  archived_at:
+                  created_by:
                     type: string
                   custom_fields:
                     additionalProperties:
                       type: string
                     type: object
-                  event_type_filter:
-                    description: EventTypeFilter defines the filter based on event
-                      types.
+                  description:
+                    type: string
+                  fiat_credit_type:
                     properties:
-                      in_values:
-                        items:
-                          type: string
-                        type: array
-                      not_in_values:
-                        items:
-                          type: string
-                        type: array
-                    type: object
-                  group_keys:
-                    items:
-                      items:
+                      id:
                         type: string
-                      type: array
-                    type: array
+                      name:
+                        type: string
+                    required:
+                    - id
+                    - name
+                    type: object
                   id:
                     type: string
                   name:
                     type: string
-                  property_filters:
-                    items:
-                      description: PropertyFilter defines a filter on properties.
-                      properties:
-                        exists:
-                          type: boolean
-                        in_values:
-                          items:
-                            type: string
-                          type: array
-                        name:
-                          type: string
-                        not_in_values:
-                          items:
-                            type: string
-                          type: array
-                      required:
-                      - name
-                      type: object
-                    type: array
-                  sql:
-                    type: string
                 required:
-                - aggregation_type
-                - event_type_filter
-                - group_keys
+                - created_at
+                - created_by
                 - id
                 - name
-                - property_filters
                 type: object
               conditions:
                 description: Conditions of the resource.

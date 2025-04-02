@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package billablemetric
+package ratecard
 
 import (
 	"context"
@@ -37,25 +37,25 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 
-	"github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
+	"github.com/redbackthomson/provider-metronome/apis/ratecard/v1alpha1"
 	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
 	metronomeClient "github.com/redbackthomson/provider-metronome/internal/clients/metronome"
 )
 
 const (
-	errNotBillableMetric         = "managed resource is not a BillableMetric custom resource"
-	errProviderConfigNotSet      = "provider config is not set"
-	errGetProviderConfig         = "cannot get provider config"
-	errGetCreds                  = "failed to create credentials from provider config"
-	errFailedToTrackUsage        = "cannot track provider config usage"
-	errFailedToGetBillableMetric = "failed to get billable metric"
-	errCreateBillableMetric      = "cannot create billable metric"
-	errArchiveBillableMetric     = "cannot archive billable metric"
+	errNotRateCard          = "managed resource is not a RateCard custom resource"
+	errProviderConfigNotSet = "provider config is not set"
+	errGetProviderConfig    = "cannot get provider config"
+	errGetCreds             = "failed to create credentials from provider config"
+	errFailedToTrackUsage   = "cannot track provider config usage"
+	errGetRateCard          = "failed to get billable metric"
+	errCreateRateCard       = "cannot create billable metric"
+	errArchiveRateCard      = "cannot archive billable metric"
 )
 
 // Setup adds a controller that reconciles Release managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
-	name := managed.ControllerName(v1alpha1.BillableMetricGroupKind)
+	name := managed.ControllerName(v1alpha1.RateCardGroupKind)
 
 	reconcilerOptions := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{
@@ -76,18 +76,18 @@ func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 	}
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.BillableMetricList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.RateCardList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
 		return err
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.BillableMetricGroupVersionKind),
+		resource.ManagedKind(v1alpha1.RateCardGroupVersionKind),
 		reconcilerOptions...,
 	)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&v1alpha1.BillableMetric{}).
+		For(&v1alpha1.RateCard{}).
 		WithOptions(o.ForControllerRuntime()).
 		Complete(r)
 }
@@ -102,9 +102,9 @@ type connector struct {
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) { //nolint:gocyclo
-	cr, ok := mg.(*v1alpha1.BillableMetric)
+	cr, ok := mg.(*v1alpha1.RateCard)
 	if !ok {
-		return nil, errors.New(errNotBillableMetric)
+		return nil, errors.New(errNotRateCard)
 	}
 	l := c.logger.WithValues("request", cr.Name)
 
@@ -149,40 +149,45 @@ func (e *metronomeExternal) Disconnect(ctx context.Context) error {
 }
 
 func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.BillableMetric)
+	cr, ok := mg.(*v1alpha1.RateCard)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotBillableMetric)
+		return managed.ExternalObservation{}, errors.New(errNotRateCard)
 	}
 
 	e.logger.Debug("Observing")
+
+	// no such thing as "deleting" a rate card, so don't block on observe
+	if cr.DeletionTimestamp != nil {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
 
 	id := meta.GetExternalName(cr)
 	if id == "" {
 		return managed.ExternalObservation{}, nil
 	}
 
-	metric, err := e.metronome.GetBillableMetric(id)
+	res, err := e.metronome.GetRateCard(metronomeClient.GetRateCardRequest{
+		ID: id,
+	})
 	if err != nil {
 		// the external name isn't valid
 		if errors.Is(err, metronomeClient.ErrInvalidName) {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
-		return managed.ExternalObservation{}, errors.Wrap(err, errFailedToGetBillableMetric)
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetRateCard)
 	}
 
-	if metric == nil {
+	if res == nil {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	if metric.ArchivedAt != "" {
-		return managed.ExternalObservation{ResourceExists: false}, nil
-	}
+	card := &res.Data
 
-	converter := &metronomeClient.BillableMetricConverterImpl{}
-	cr.Status.AtProvider = *converter.FromBillableMetric(metric)
+	converter := &metronomeClient.RateCardConverterImpl{}
+	cr.Status.AtProvider = *converter.FromRateCard(card)
 	cr.SetConditions(xpv1.Available())
 
-	upToDate, diff := isUpToDate(cr, metric)
+	upToDate, diff := isUpToDate(cr, card)
 
 	return managed.ExternalObservation{
 		ResourceExists:   true,
@@ -192,22 +197,22 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 }
 
 func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.BillableMetric)
+	cr, ok := mg.(*v1alpha1.RateCard)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotBillableMetric)
+		return managed.ExternalCreation{}, errors.New(errNotRateCard)
 	}
 
 	e.logger.Debug("Creating")
 
-	converter := &metronomeClient.BillableMetricConverterImpl{}
-	req := converter.FromBillableMetricSpec(&cr.Spec.ForProvider)
+	converter := &metronomeClient.RateCardConverterImpl{}
+	req := converter.FromRateCardSpec(&cr.Spec.ForProvider)
 
-	res, err := e.metronome.CreateBillableMetric(*req)
+	res, err := e.metronome.CreateRateCard(*req)
 	if err != nil {
-		return managed.ExternalCreation{}, errors.Wrap(err, errCreateBillableMetric)
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRateCard)
 	}
 	if res.Data.ID == "" {
-		return managed.ExternalCreation{}, errors.New("billable metric ID is missing")
+		return managed.ExternalCreation{}, errors.New("rate card ID is missing")
 	}
 
 	meta.SetExternalName(cr, res.Data.ID)
@@ -216,47 +221,27 @@ func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (ma
 }
 
 func (e *metronomeExternal) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v1alpha1.BillableMetric)
+	_, ok := mg.(*v1alpha1.RateCard)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotBillableMetric)
+		return managed.ExternalUpdate{}, errors.New(errNotRateCard)
 	}
 
 	e.logger.Debug("Updating")
 
-	return managed.ExternalUpdate{}, errors.New("updating a billable metric is not supported")
+	return managed.ExternalUpdate{}, errors.New("updating a rate card is not supported")
 }
 
 func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mg.(*v1alpha1.BillableMetric)
-	if !ok {
-		return managed.ExternalDelete{}, errors.New(errNotBillableMetric)
-	}
-
-	e.logger.Debug("Deleting")
-
-	id := meta.GetExternalName(cr)
-	if id == "" {
-		return managed.ExternalDelete{}, nil
-	}
-
-	_, err := e.metronome.ArchiveBillableMetric(id)
-	if err != nil {
-		if errors.Is(err, metronomeClient.ErrAlreadyArchived) {
-			return managed.ExternalDelete{}, nil
-		}
-		return managed.ExternalDelete{}, errors.Wrap(err, errArchiveBillableMetric)
-	}
-
 	return managed.ExternalDelete{}, nil
 }
 
-func isUpToDate(cr *v1alpha1.BillableMetric, metric *metronomeClient.BillableMetric) (bool, string) {
+func isUpToDate(cr *v1alpha1.RateCard, metric *metronomeClient.RateCard) (bool, string) {
 	spec := &cr.Spec.ForProvider
 
-	converter := &metronomeClient.BillableMetricConverterImpl{}
-	params := converter.FromBillableMetricToParameters(metric)
+	converter := &metronomeClient.RateCardConverterImpl{}
+	params := converter.FromRateCardToParameters(metric)
 
-	sortPropertyFilter := func(a, b v1alpha1.PropertyFilter) int {
+	sortAliases := func(a, b v1alpha1.RateCardAlias) int {
 		if a.Name < b.Name {
 			return 1
 		}
@@ -266,8 +251,8 @@ func isUpToDate(cr *v1alpha1.BillableMetric, metric *metronomeClient.BillableMet
 		return -1
 	}
 
-	slices.SortFunc(spec.PropertyFilters, sortPropertyFilter)
-	slices.SortFunc(params.PropertyFilters, sortPropertyFilter)
+	slices.SortFunc(spec.Aliases, sortAliases)
+	slices.SortFunc(params.Aliases, sortAliases)
 
 	opts := []cmp.Option{
 		cmpopts.EquateEmpty(),

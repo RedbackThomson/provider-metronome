@@ -23,6 +23,7 @@ import (
 
 	"github.com/redbackthomson/provider-metronome/internal/controller/billablemetric"
 	"github.com/redbackthomson/provider-metronome/internal/controller/config"
+	"github.com/redbackthomson/provider-metronome/internal/controller/ratecard"
 )
 
 // Setup creates all Template controllers with the supplied logger and adds them to
@@ -32,6 +33,9 @@ func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 		return err
 	}
 	if err := billablemetric.Setup(mgr, o, baseUrl); err != nil {
+		return err
+	}
+	if err := ratecard.Setup(mgr, o, baseUrl); err != nil {
 		return err
 	}
 	return nil

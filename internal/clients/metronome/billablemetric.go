@@ -153,7 +153,7 @@ func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*Cre
 func (c *Client) GetBillableMetric(id string) (*BillableMetric, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
-	if !IsValidBillableMetricName(id) {
+	if !IsUUID(id) {
 		return nil, ErrInvalidName
 	}
 
@@ -213,7 +213,7 @@ func (c *Client) ListBillableMetrics() (*ListBillableMetricsResponse, error) {
 func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
-	if !IsValidBillableMetricName(id) {
+	if !IsUUID(id) {
 		return nil, ErrInvalidName
 	}
 
@@ -249,7 +249,7 @@ func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricReq
 func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/archive", c.baseURL)
 
-	if !IsValidBillableMetricName(id) {
+	if !IsUUID(id) {
 		return nil, ErrInvalidName
 	}
 
@@ -290,14 +290,13 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 	return &response, nil
 }
 
-func IsValidBillableMetricName(s string) bool {
+func IsUUID(s string) bool {
 	return uuid.Validate(s) == nil
 }
 
 // BillableMetricConverter helps to convert Metronome client types to api types
 // of this provider and vise-versa From & To shall both be defined for each type
-// conversion, to prevent
-// divergence from Metronome client Types
+// conversion, to prevent divergence from Metronome client Types
 // goverter:converter
 // goverter:useZeroValueOnPointerInconsistency
 // goverter:ignoreUnexported

@@ -79,6 +79,11 @@ type ListCustomerContractsResponse struct {
 
 func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, error) {
 	url := fmt.Sprintf("%s/v2/contracts/get", c.baseURL)
+
+	if !IsUUID(reqData.ContractID) {
+		return nil, ErrInvalidName
+	}
+
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err

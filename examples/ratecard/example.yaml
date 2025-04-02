@@ -1,0 +1,12 @@
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: RateCard
+metadata:
+  name: example-rate-card
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    name: My Rate Card
+    description: My Rate Card Description
+    aliases:
+      - name: my-rate-card
