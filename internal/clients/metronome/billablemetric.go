@@ -18,13 +18,24 @@ package metronome
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/google/uuid"
 	"github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
+)
+
+var (
+	ErrInvalidName     = errors.New("invalid billable metric name")
+	ErrAlreadyArchived = errors.New("billable metric already archived")
+)
+
+const (
+	errBillableMetricAlreadyArchived = "Billable metric already archived"
 )
 
 // EventTypeFilter defines the filter based on event types.
@@ -142,6 +153,10 @@ func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*Cre
 func (c *Client) GetBillableMetric(id string) (*BillableMetric, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
+	if !IsValidBillableMetricName(id) {
+		return nil, ErrInvalidName
+	}
+
 	req, err := c.newAuthenticatedRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -198,6 +213,10 @@ func (c *Client) ListBillableMetrics() (*ListBillableMetricsResponse, error) {
 func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
+	if !IsValidBillableMetricName(id) {
+		return nil, ErrInvalidName
+	}
+
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
@@ -230,6 +249,10 @@ func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricReq
 func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/archive", c.baseURL)
 
+	if !IsValidBillableMetricName(id) {
+		return nil, ErrInvalidName
+	}
+
 	// Prepare the request payload
 	reqData := ArchiveBillableMetricRequest{ID: id}
 	jsonData, err := json.Marshal(reqData)
@@ -252,6 +275,9 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 
 	// Check for a successful response
 	if resp.StatusCode != http.StatusOK {
+		if IsClientError(resp.Body, errBillableMetricAlreadyArchived) {
+			return nil, ErrAlreadyArchived
+		}
 		return nil, fmt.Errorf("failed to archive billable metric: %s", resp.Status)
 	}
 
@@ -262,6 +288,10 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 	}
 
 	return &response, nil
+}
+
+func IsValidBillableMetricName(s string) bool {
+	return uuid.Validate(s) == nil
 }
 
 // BillableMetricConverter helps to convert Metronome client types to api types
@@ -282,6 +312,9 @@ type BillableMetricConverter interface {
 
 	FromBillableMetric(in *BillableMetric) *v1alpha1.ObservedBillableMetric
 	ToBillableMetric(in *v1alpha1.ObservedBillableMetric) *BillableMetric
+
+	// goverter:ignoreMissing
+	FromBillableMetricToParameters(in *BillableMetric) *v1alpha1.BillableMetricParameters
 }
 
 // ExtV1JSONToRuntimeRawExtension converts an extv1.JSON into a

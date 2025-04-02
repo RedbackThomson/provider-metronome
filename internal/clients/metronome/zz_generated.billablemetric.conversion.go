@@ -82,6 +82,42 @@ func (c *BillableMetricConverterImpl) FromBillableMetricSpec(source *v1alpha1.Bi
 	}
 	return pMetronomeCreateBillableMetricRequest
 }
+func (c *BillableMetricConverterImpl) FromBillableMetricToParameters(source *BillableMetric) *v1alpha1.BillableMetricParameters {
+	var pV1alpha1BillableMetricParameters *v1alpha1.BillableMetricParameters
+	if source != nil {
+		var v1alpha1BillableMetricParameters v1alpha1.BillableMetricParameters
+		v1alpha1BillableMetricParameters.Name = (*source).Name
+		v1alpha1BillableMetricParameters.AggregationType = v1alpha1.AggregationType((*source).AggregationType)
+		v1alpha1BillableMetricParameters.AggregationKey = (*source).AggregationKey
+		v1alpha1BillableMetricParameters.EventTypeFilter = c.metronomeEventTypeFilterToV1alpha1EventTypeFilter((*source).EventTypeFilter)
+		if (*source).PropertyFilters != nil {
+			v1alpha1BillableMetricParameters.PropertyFilters = make([]v1alpha1.PropertyFilter, len((*source).PropertyFilters))
+			for i := 0; i < len((*source).PropertyFilters); i++ {
+				v1alpha1BillableMetricParameters.PropertyFilters[i] = c.metronomePropertyFilterToV1alpha1PropertyFilter((*source).PropertyFilters[i])
+			}
+		}
+		if (*source).GroupKeys != nil {
+			v1alpha1BillableMetricParameters.GroupKeys = make([][]string, len((*source).GroupKeys))
+			for j := 0; j < len((*source).GroupKeys); j++ {
+				if (*source).GroupKeys[j] != nil {
+					v1alpha1BillableMetricParameters.GroupKeys[j] = make([]string, len((*source).GroupKeys[j]))
+					for k := 0; k < len((*source).GroupKeys[j]); k++ {
+						v1alpha1BillableMetricParameters.GroupKeys[j][k] = (*source).GroupKeys[j][k]
+					}
+				}
+			}
+		}
+		if (*source).CustomFields != nil {
+			v1alpha1BillableMetricParameters.CustomFields = make(map[string]string, len((*source).CustomFields))
+			for key, value := range (*source).CustomFields {
+				v1alpha1BillableMetricParameters.CustomFields[key] = value
+			}
+		}
+		v1alpha1BillableMetricParameters.SQL = (*source).SQL
+		pV1alpha1BillableMetricParameters = &v1alpha1BillableMetricParameters
+	}
+	return pV1alpha1BillableMetricParameters
+}
 func (c *BillableMetricConverterImpl) ToBillableMetric(source *v1alpha1.ObservedBillableMetric) *BillableMetric {
 	var pMetronomeBillableMetric *BillableMetric
 	if source != nil {

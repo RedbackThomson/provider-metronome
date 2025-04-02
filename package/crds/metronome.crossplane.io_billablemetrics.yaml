@@ -130,6 +130,9 @@ spec:
                 - name
                 - property_filters
                 type: object
+                x-kubernetes-validations:
+                - message: forProvider is immutable
+                  rule: self == oldSelf
               managementPolicies:
                 default:
                 - '*'

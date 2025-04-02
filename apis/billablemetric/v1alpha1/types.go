@@ -76,7 +76,8 @@ type ObservedBillableMetric struct {
 // BillableMetricSpec defines the desired state of a Release.
 type BillableMetricSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       BillableMetricParameters `json:"forProvider"`
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="forProvider is immutable"
+	ForProvider BillableMetricParameters `json:"forProvider"`
 	// RollbackRetriesLimit is max number of attempts to retry Helm deployment by rolling back the release.
 	RollbackRetriesLimit *int32 `json:"rollbackLimit,omitempty"`
 }

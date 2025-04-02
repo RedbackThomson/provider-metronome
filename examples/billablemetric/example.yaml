@@ -23,7 +23,7 @@ spec:
         in_values:
           - slow
           - fast
-    aggregation_type: SUM
+    aggregation_type: sum
     aggregation_key: cpu_hours
     group_keys:
         -

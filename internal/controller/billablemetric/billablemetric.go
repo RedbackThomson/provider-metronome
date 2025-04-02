@@ -18,13 +18,16 @@ package billablemetric
 
 import (
 	"context"
+	"slices"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
 	"github.com/crossplane/crossplane-runtime/pkg/feature"
@@ -46,6 +49,8 @@ const (
 	errGetCreds                  = "failed to create credentials from provider config"
 	errFailedToTrackUsage        = "cannot track provider config usage"
 	errFailedToGetBillableMetric = "failed to get billable metric"
+	errCreateBillableMetric      = "cannot create billable metric"
+	errArchiveBillableMetric     = "cannot archive billable metric"
 )
 
 // Setup adds a controller that reconciles Release managed resources.
@@ -157,55 +162,116 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 	}
 
 	metric, err := e.metronome.GetBillableMetric(id)
-	if err != nil || metric == nil {
+	if err != nil {
+		// the external name isn't valid
+		if errors.Is(err, metronomeClient.ErrInvalidName) {
+			return managed.ExternalObservation{ResourceExists: false}, nil
+		}
 		return managed.ExternalObservation{}, errors.Wrap(err, errFailedToGetBillableMetric)
+	}
+
+	if metric == nil {
+		return managed.ExternalObservation{ResourceExists: false}, nil
+	}
+
+	if metric.ArchivedAt != "" {
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
 	converter := &metronomeClient.BillableMetricConverterImpl{}
 	cr.Status.AtProvider = *converter.FromBillableMetric(metric)
+	cr.SetConditions(xpv1.Available())
+
+	upToDate, diff := isUpToDate(cr, metric)
 
 	return managed.ExternalObservation{
 		ResourceExists:   true,
-		ResourceUpToDate: isBillableMetricUpToDate(cr, metric),
+		ResourceUpToDate: upToDate,
+		Diff:             diff,
 	}, nil
 }
 
 func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	// cr, ok := mg.(*v1beta1.Release)
-	// if !ok {
-	// 	return managed.ExternalCreation{}, errors.New(errNotBillableMetric)
-	// }
+	cr, ok := mg.(*v1alpha1.BillableMetric)
+	if !ok {
+		return managed.ExternalCreation{}, errors.New(errNotBillableMetric)
+	}
 
 	e.logger.Debug("Creating")
+
+	converter := &metronomeClient.BillableMetricConverterImpl{}
+	req := converter.FromBillableMetricSpec(&cr.Spec.ForProvider)
+
+	res, err := e.metronome.CreateBillableMetric(*req)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateBillableMetric)
+	}
+	if res.Data.ID == "" {
+		return managed.ExternalCreation{}, errors.New("billable metric ID is missing")
+	}
+
+	meta.SetExternalName(cr, res.Data.ID)
 
 	return managed.ExternalCreation{}, nil
 }
 
 func (e *metronomeExternal) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	// cr, ok := mg.(*v1beta1.Release)
-	// if !ok {
-	// 	return managed.ExternalUpdate{}, errors.New(errNotBillableMetric)
-	// }
+	_, ok := mg.(*v1alpha1.BillableMetric)
+	if !ok {
+		return managed.ExternalUpdate{}, errors.New(errNotBillableMetric)
+	}
 
 	e.logger.Debug("Updating")
-	return managed.ExternalUpdate{}, nil
+
+	return managed.ExternalUpdate{}, errors.New("updating a billable metric is not supported")
 }
 
 func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	// cr, ok := mg.(*v1beta1.Release)
-	// if !ok {
-	// 	return managed.ExternalDelete{}, errors.New(errNotBillableMetric)
-	// }
+	cr, ok := mg.(*v1alpha1.BillableMetric)
+	if !ok {
+		return managed.ExternalDelete{}, errors.New(errNotBillableMetric)
+	}
 
 	e.logger.Debug("Deleting")
+
+	id := meta.GetExternalName(cr)
+	if id == "" {
+		return managed.ExternalDelete{}, nil
+	}
+
+	_, err := e.metronome.ArchiveBillableMetric(id)
+	if err != nil {
+		if errors.Is(err, metronomeClient.ErrAlreadyArchived) {
+			return managed.ExternalDelete{}, nil
+		}
+		return managed.ExternalDelete{}, errors.Wrap(err, errArchiveBillableMetric)
+	}
 
 	return managed.ExternalDelete{}, nil
 }
 
-func isBillableMetricUpToDate(cr *v1alpha1.BillableMetric, metric *metronomeClient.BillableMetric) bool {
-	spec := cr.Spec.ForProvider
+func isUpToDate(cr *v1alpha1.BillableMetric, metric *metronomeClient.BillableMetric) (bool, string) {
+	spec := &cr.Spec.ForProvider
 
-	opts := []cmp.Option{}
+	converter := &metronomeClient.BillableMetricConverterImpl{}
+	params := converter.FromBillableMetricToParameters(metric)
 
-	return cmp.Equal(spec, metric, opts...)
+	sortPropertyFilter := func(a, b v1alpha1.PropertyFilter) int {
+		if a.Name < b.Name {
+			return 1
+		}
+		if a.Name == b.Name {
+			return 0
+		}
+		return -1
+	}
+
+	slices.SortFunc(spec.PropertyFilters, sortPropertyFilter)
+	slices.SortFunc(params.PropertyFilters, sortPropertyFilter)
+
+	opts := []cmp.Option{
+		cmpopts.EquateEmpty(),
+	}
+
+	return cmp.Equal(spec, params, opts...), cmp.Diff(spec, params, opts...)
 }
