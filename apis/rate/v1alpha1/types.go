@@ -28,38 +28,38 @@ type Tier struct {
 }
 
 type CommitRate struct {
-	RateType string  `json:"rate_type"`
+	RateType string  `json:"rateType"`
 	Price    float64 `json:"price"`
 	Tiers    []Tier  `json:"tiers"`
 }
 
 // RateParameters represents the request payload for creating a rate card.
 type RateParameters struct {
-	RateCardID string `json:"rate_card_id,omitempty"`
+	RateCardID string `json:"rateCardId,omitempty"`
 
 	// +optional
-	RateCardRef *xpv1.Reference `json:"rate_card_ref,omitempty"`
+	RateCardRef *xpv1.Reference `json:"rateCardRef,omitempty"`
 
 	// +optional
-	RateCardSelector *xpv1.Selector `json:"rate_card_selector,omitempty"`
+	RateCardSelector *xpv1.Selector `json:"rateCardSelector,omitempty"`
 
-	ProductID  string `json:"product_id"`
-	StartingAt string `json:"starting_at"`
+	ProductID  string `json:"productId"`
+	StartingAt string `json:"startingAt"`
 	Entitled   bool   `json:"entitled"`
-	RateType   string `json:"rate_type"`
+	RateType   string `json:"rateType"`
 
-	// Price is the default price. For FLAT and SUBSCRIPTION rate_type, this
-	// must be >=0 and the unit is **CENTS**. For PERCENTAGE rate_type, this is
+	// Price is the default price. For FLAT and SUBSCRIPTION rateType, this
+	// must be >=0 and the unit is **CENTS**. For PERCENTAGE rateType, this is
 	// a decimal fraction, e.g. use 0.1 for 10%; this must be >=0 and <=1.
 	Price              float64           `json:"price,omitempty"`
-	PricingGroupValues map[string]string `json:"pricing_group_values,omitempty"`
-	CommitRate         *CommitRate       `json:"commit_rate,omitempty"`
-	CreditTypeID       string            `json:"credit_type_id,omitempty"`
-	EndingBefore       string            `json:"ending_before,omitempty"`
-	IsProrated         bool              `json:"is_prorated,omitempty"`
+	PricingGroupValues map[string]string `json:"pricingGroupValues,omitempty"`
+	CommitRate         *CommitRate       `json:"commitRate,omitempty"`
+	CreditTypeID       string            `json:"creditTypeId,omitempty"`
+	EndingBefore       string            `json:"endingBefore,omitempty"`
+	IsProrated         bool              `json:"isProrated,omitempty"`
 	Quantity           float64           `json:"quantity,omitempty"`
 	Tiers              []Tier            `json:"tiers,omitempty"`
-	UseListPrices      bool              `json:"use_list_prices,omitempty"`
+	UseListPrices      bool              `json:"useListPrices,omitempty"`
 }
 
 type CreditType struct {
@@ -68,28 +68,28 @@ type CreditType struct {
 }
 
 type RateDetails struct {
-	RateType           string            `json:"rate_type"`
-	CreditType         CreditType        `json:"credit_type,omitempty"`
-	IsProrated         bool              `json:"is_prorated,omitempty"`
+	RateType           string            `json:"rateType"`
+	CreditType         CreditType        `json:"creditType,omitempty"`
+	IsProrated         bool              `json:"isProrated,omitempty"`
 	Price              float64           `json:"price,omitempty"`
-	PricingGroupValues map[string]string `json:"pricing_group_values,omitempty"`
+	PricingGroupValues map[string]string `json:"pricingGroupValues,omitempty"`
 	Quantity           float64           `json:"quantity,omitempty"`
 	Tiers              []Tier            `json:"tiers,omitempty"`
-	UseListPrices      bool              `json:"use_list_prices,omitempty"`
+	UseListPrices      bool              `json:"useListPrices,omitempty"`
 }
 
 // ObservedRate represents the data structure of a rate card.
 type ObservedRate struct {
 	Entitled           bool              `json:"entitled"`
-	ProductCustomField map[string]string `json:"product_custom_fields"`
-	ProductID          string            `json:"product_id"`
-	ProductName        string            `json:"product_name"`
-	ProductTags        []string          `json:"product_tags"`
+	ProductCustomField map[string]string `json:"productCustomFields"`
+	ProductID          string            `json:"productId"`
+	ProductName        string            `json:"productName"`
+	ProductTags        []string          `json:"productTags"`
 	Details            RateDetails       `json:"rate"`
-	StartingAt         string            `json:"starting_at"`
-	CommitRate         CommitRate        `json:"commit_rate,omitempty"`
-	EndingBefore       string            `json:"ending_before,omitempty"`
-	PricingGroupValues map[string]string `json:"pricing_group_values,omitempty"`
+	StartingAt         string            `json:"startingAt"`
+	CommitRate         CommitRate        `json:"commitRate,omitempty"`
+	EndingBefore       string            `json:"endingBefore,omitempty"`
+	PricingGroupValues map[string]string `json:"pricingGroupValues,omitempty"`
 }
 
 // RateSpec defines the desired state of a Release.

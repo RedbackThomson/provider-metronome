@@ -7,25 +7,25 @@ spec:
     name: provider-metronome
   forProvider:
     name: CPU Hours
-    event_type_filter:
-      in_values:
+    eventTypeFilter:
+      inValues:
         - cpu_usage
-    property_filters:
+    propertyFilters:
       - name: cpu_hours
         exists: True
       - name: region
         exists: True
-        in_values:
+        inValues:
           - EU
           - NA
       - name: machine_type
         exists: True
-        in_values:
+        inValues:
           - slow
           - fast
-    aggregation_type: sum
-    aggregation_key: cpu_hours
-    group_keys:
+    aggregationType: sum
+    aggregationKey: cpu_hours
+    groupKeys:
         -
           - region
         -

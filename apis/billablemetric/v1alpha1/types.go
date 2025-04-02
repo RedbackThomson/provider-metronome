@@ -24,16 +24,16 @@ import (
 
 // EventTypeFilter defines the filter based on event types.
 type EventTypeFilter struct {
-	InValues    []string `json:"in_values,omitempty"`
-	NotInValues []string `json:"not_in_values,omitempty"`
+	InValues    []string `json:"inValues,omitempty"`
+	NotInValues []string `json:"notInValues,omitempty"`
 }
 
 // PropertyFilter defines a filter on properties.
 type PropertyFilter struct {
 	Name        string   `json:"name"`
 	Exists      *bool    `json:"exists,omitempty"`
-	InValues    []string `json:"in_values,omitempty"`
-	NotInValues []string `json:"not_in_values,omitempty"`
+	InValues    []string `json:"inValues,omitempty"`
+	NotInValues []string `json:"notInValues,omitempty"`
 }
 
 type AggregationType string
@@ -49,12 +49,12 @@ const (
 // BillableMetricParameters represents the request payload for creating a billable metric.
 type BillableMetricParameters struct {
 	Name            string            `json:"name"`
-	AggregationType AggregationType   `json:"aggregation_type"`
-	AggregationKey  string            `json:"aggregation_key"`
-	EventTypeFilter EventTypeFilter   `json:"event_type_filter"`
-	PropertyFilters []PropertyFilter  `json:"property_filters"`
-	GroupKeys       [][]string        `json:"group_keys"`
-	CustomFields    map[string]string `json:"custom_fields,omitempty"`
+	AggregationType AggregationType   `json:"aggregationType"`
+	AggregationKey  string            `json:"aggregationKey"`
+	EventTypeFilter EventTypeFilter   `json:"eventTypeFilter"`
+	PropertyFilters []PropertyFilter  `json:"propertyFilters"`
+	GroupKeys       [][]string        `json:"groupKeys"`
+	CustomFields    map[string]string `json:"customFields,omitempty"`
 	SQL             string            `json:"sql,omitempty"`
 }
 
@@ -63,14 +63,14 @@ type ObservedBillableMetric struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 	// +kubebuilder:validation:Enum=count;latest;max;sum;unique
-	AggregationType AggregationType   `json:"aggregation_type"`
-	AggregationKey  string            `json:"aggregation_key,omitempty"`
-	EventTypeFilter EventTypeFilter   `json:"event_type_filter"`
-	PropertyFilters []PropertyFilter  `json:"property_filters"`
-	GroupKeys       [][]string        `json:"group_keys"`
-	CustomFields    map[string]string `json:"custom_fields,omitempty"`
+	AggregationType AggregationType   `json:"aggregationType"`
+	AggregationKey  string            `json:"aggregationKey,omitempty"`
+	EventTypeFilter EventTypeFilter   `json:"eventTypeFilter"`
+	PropertyFilters []PropertyFilter  `json:"propertyFilters"`
+	GroupKeys       [][]string        `json:"groupKeys"`
+	CustomFields    map[string]string `json:"customFields,omitempty"`
 	SQL             string            `json:"sql,omitempty"`
-	ArchivedAt      string            `json:"archived_at,omitempty"`
+	ArchivedAt      string            `json:"archivedAt,omitempty"`
 }
 
 // BillableMetricSpec defines the desired state of a Release.

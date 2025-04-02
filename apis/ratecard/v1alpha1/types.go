@@ -27,8 +27,8 @@ type RateCardAlias struct {
 }
 
 type CreditTypeConversion struct {
-	CustomCreditTypeID  string `json:"custom_credit_type_id"`
-	FiatPerCustomCredit string `json:"fiat_per_custom_credit"`
+	CustomCreditTypeID  string `json:"customCreditTypeId"`
+	FiatPerCustomCredit string `json:"fiatPerCustomCredit"`
 }
 
 type FiatCreditType struct {
@@ -40,10 +40,10 @@ type FiatCreditType struct {
 type RateCardParameters struct {
 	Name                  string                 `json:"name"`
 	Description           string                 `json:"description,omitempty"`
-	FiatCreditTypeID      string                 `json:"fiat_credit_type_id,omitempty"`
-	CreditTypeConversions []CreditTypeConversion `json:"credit_type_conversions,omitempty"`
+	FiatCreditTypeID      string                 `json:"fiatCreditTypeId,omitempty"`
+	CreditTypeConversions []CreditTypeConversion `json:"creditTypeConversions,omitempty"`
 	Aliases               []RateCardAlias        `json:"aliases,omitempty"`
-	CustomFields          map[string]string      `json:"custom_fields,omitempty"`
+	CustomFields          map[string]string      `json:"customFields,omitempty"`
 }
 
 // ObservedRateCard represents the data structure of a rate card.
@@ -51,11 +51,11 @@ type ObservedRateCard struct {
 	ID             string            `json:"id"`
 	Name           string            `json:"name"`
 	Description    string            `json:"description,omitempty"`
-	FiatCreditType FiatCreditType    `json:"fiat_credit_type,omitempty"`
-	CreatedAt      string            `json:"created_at"`
-	CreatedBy      string            `json:"created_by"`
+	FiatCreditType FiatCreditType    `json:"fiatCreditType,omitempty"`
+	CreatedAt      string            `json:"createdAt"`
+	CreatedBy      string            `json:"createdBy"`
 	Aliases        []RateCardAlias   `json:"aliases,omitempty"`
-	CustomFields   map[string]string `json:"custom_fields,omitempty"`
+	CustomFields   map[string]string `json:"customFields,omitempty"`
 }
 
 // RateCardSpec defines the desired state of a Release.
