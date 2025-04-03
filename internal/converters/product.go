@@ -34,12 +34,26 @@ import (
 type ProductConverter interface {
 	FromProductSpec(in *v1alpha1.ProductParameters) *metronome.CreateProductRequest
 
-	// goverter:ignore BillableMetricRef BillableMetricSelector
+	// goverter:ignore BillableMetricRef BillableMetricSelector StartingAt
 	ToProductSpec(in *metronome.CreateProductRequest) *v1alpha1.ProductParameters
 
 	FromProduct(in *metronome.Product) *v1alpha1.ObservedProduct
 	ToProduct(in *v1alpha1.ObservedProduct) *metronome.Product
 
+	// goverter:ignore ProductID
+	ToProductUpdate(in *v1alpha1.ProductParameters) *metronome.UpdateProductRequest
+
 	// goverter:ignoreMissing
+	// goverter:map Current.BillableMetricID BillableMetricID
+	// goverter:map Current.CompositeProductIDs CompositeProductIDs
+	// goverter:map Current.CompositeTags CompositeTags
+	// goverter:map Current.ExcludeFreeUsage ExcludeFreeUsage
+	// goverter:map Current.Name Name
+	// goverter:map Current.PresentationGroupKey PresentationGroupKey
+	// goverter:map Current.PricingGroupKey PricingGroupKey
+	// goverter:map Current.QuantityConversion QuantityConversion
+	// goverter:map Current.QuantityRounding QuantityRounding
+	// goverter:map Current.StartingAt StartingAt
+	// goverter:map Current.Tags Tags
 	FromProductToParameters(in *metronome.Product) *v1alpha1.ProductParameters
 }

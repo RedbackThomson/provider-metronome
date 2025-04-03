@@ -1,0 +1,18 @@
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: Product
+metadata:
+  name: example-product
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    type: USAGE
+    name: Control Plane
+    billableMetricId: 9b08f1bf-e228-4286-8463-98f4410ba901
+    pricingGroupKey:
+      - region
+      - cloud
+      - size
+    presentationGroupKey:
+      - cloud
+      - region

@@ -84,7 +84,43 @@ func (c *ProductConverterImpl) FromProductToParameters(source *metronome.Product
 	var pV1alpha1ProductParameters *v1alpha1.ProductParameters
 	if source != nil {
 		var v1alpha1ProductParameters v1alpha1.ProductParameters
+		v1alpha1ProductParameters.BillableMetricID = (*source).Current.BillableMetricID
+		v1alpha1ProductParameters.Name = (*source).Current.Name
 		v1alpha1ProductParameters.Type = (*source).Type
+		if (*source).Current.CompositeProductIDs != nil {
+			v1alpha1ProductParameters.CompositeProductIDs = make([]string, len((*source).Current.CompositeProductIDs))
+			for i := 0; i < len((*source).Current.CompositeProductIDs); i++ {
+				v1alpha1ProductParameters.CompositeProductIDs[i] = (*source).Current.CompositeProductIDs[i]
+			}
+		}
+		if (*source).Current.CompositeTags != nil {
+			v1alpha1ProductParameters.CompositeTags = make([]string, len((*source).Current.CompositeTags))
+			for j := 0; j < len((*source).Current.CompositeTags); j++ {
+				v1alpha1ProductParameters.CompositeTags[j] = (*source).Current.CompositeTags[j]
+			}
+		}
+		v1alpha1ProductParameters.ExcludeFreeUsage = (*source).Current.ExcludeFreeUsage
+		if (*source).Current.PresentationGroupKey != nil {
+			v1alpha1ProductParameters.PresentationGroupKey = make([]string, len((*source).Current.PresentationGroupKey))
+			for k := 0; k < len((*source).Current.PresentationGroupKey); k++ {
+				v1alpha1ProductParameters.PresentationGroupKey[k] = (*source).Current.PresentationGroupKey[k]
+			}
+		}
+		if (*source).Current.PricingGroupKey != nil {
+			v1alpha1ProductParameters.PricingGroupKey = make([]string, len((*source).Current.PricingGroupKey))
+			for l := 0; l < len((*source).Current.PricingGroupKey); l++ {
+				v1alpha1ProductParameters.PricingGroupKey[l] = (*source).Current.PricingGroupKey[l]
+			}
+		}
+		v1alpha1ProductParameters.QuantityConversion = c.pMetronomeQuantityConversionToPV1alpha1QuantityConversion((*source).Current.QuantityConversion)
+		v1alpha1ProductParameters.QuantityRounding = c.pMetronomeQuantityRoundingToPV1alpha1QuantityRounding((*source).Current.QuantityRounding)
+		if (*source).Current.Tags != nil {
+			v1alpha1ProductParameters.Tags = make([]string, len((*source).Current.Tags))
+			for m := 0; m < len((*source).Current.Tags); m++ {
+				v1alpha1ProductParameters.Tags[m] = (*source).Current.Tags[m]
+			}
+		}
+		v1alpha1ProductParameters.StartingAt = (*source).Current.StartingAt
 		pV1alpha1ProductParameters = &v1alpha1ProductParameters
 	}
 	return pV1alpha1ProductParameters
@@ -157,6 +193,50 @@ func (c *ProductConverterImpl) ToProductSpec(source *metronome.CreateProductRequ
 		pV1alpha1ProductParameters = &v1alpha1ProductParameters
 	}
 	return pV1alpha1ProductParameters
+}
+func (c *ProductConverterImpl) ToProductUpdate(source *v1alpha1.ProductParameters) *metronome.UpdateProductRequest {
+	var pMetronomeUpdateProductRequest *metronome.UpdateProductRequest
+	if source != nil {
+		var metronomeUpdateProductRequest metronome.UpdateProductRequest
+		metronomeUpdateProductRequest.StartingAt = (*source).StartingAt
+		metronomeUpdateProductRequest.BillableMetricID = (*source).BillableMetricID
+		if (*source).CompositeProductIDs != nil {
+			metronomeUpdateProductRequest.CompositeProductIDs = make([]string, len((*source).CompositeProductIDs))
+			for i := 0; i < len((*source).CompositeProductIDs); i++ {
+				metronomeUpdateProductRequest.CompositeProductIDs[i] = (*source).CompositeProductIDs[i]
+			}
+		}
+		if (*source).CompositeTags != nil {
+			metronomeUpdateProductRequest.CompositeTags = make([]string, len((*source).CompositeTags))
+			for j := 0; j < len((*source).CompositeTags); j++ {
+				metronomeUpdateProductRequest.CompositeTags[j] = (*source).CompositeTags[j]
+			}
+		}
+		metronomeUpdateProductRequest.ExcludeFreeUsage = (*source).ExcludeFreeUsage
+		metronomeUpdateProductRequest.Name = (*source).Name
+		if (*source).PresentationGroupKey != nil {
+			metronomeUpdateProductRequest.PresentationGroupKey = make([]string, len((*source).PresentationGroupKey))
+			for k := 0; k < len((*source).PresentationGroupKey); k++ {
+				metronomeUpdateProductRequest.PresentationGroupKey[k] = (*source).PresentationGroupKey[k]
+			}
+		}
+		if (*source).PricingGroupKey != nil {
+			metronomeUpdateProductRequest.PricingGroupKey = make([]string, len((*source).PricingGroupKey))
+			for l := 0; l < len((*source).PricingGroupKey); l++ {
+				metronomeUpdateProductRequest.PricingGroupKey[l] = (*source).PricingGroupKey[l]
+			}
+		}
+		metronomeUpdateProductRequest.QuantityConversion = c.pV1alpha1QuantityConversionToPMetronomeQuantityConversion((*source).QuantityConversion)
+		metronomeUpdateProductRequest.QuantityRounding = c.pV1alpha1QuantityRoundingToPMetronomeQuantityRounding((*source).QuantityRounding)
+		if (*source).Tags != nil {
+			metronomeUpdateProductRequest.Tags = make([]string, len((*source).Tags))
+			for m := 0; m < len((*source).Tags); m++ {
+				metronomeUpdateProductRequest.Tags[m] = (*source).Tags[m]
+			}
+		}
+		pMetronomeUpdateProductRequest = &metronomeUpdateProductRequest
+	}
+	return pMetronomeUpdateProductRequest
 }
 func (c *ProductConverterImpl) metronomeProductDetailsToV1alpha1ProductDetails(source metronome.ProductDetails) v1alpha1.ProductDetails {
 	var v1alpha1ProductDetails v1alpha1.ProductDetails
@@ -245,7 +325,7 @@ func (c *ProductConverterImpl) pV1alpha1QuantityRoundingToPMetronomeQuantityRoun
 func (c *ProductConverterImpl) v1alpha1ProductDetailsToMetronomeProductDetails(source v1alpha1.ProductDetails) metronome.ProductDetails {
 	var metronomeProductDetails metronome.ProductDetails
 	metronomeProductDetails.Name = source.Name
-	metronomeProductDetails.StartingAt = source.StartingAt
+	metronomeProductDetails.BillableMetricID = source.BillableMetricID
 	if source.CompositeProductIDs != nil {
 		metronomeProductDetails.CompositeProductIDs = make([]string, len(source.CompositeProductIDs))
 		for i := 0; i < len(source.CompositeProductIDs); i++ {
@@ -279,8 +359,8 @@ func (c *ProductConverterImpl) v1alpha1ProductDetailsToMetronomeProductDetails(s
 			metronomeProductDetails.Tags[m] = source.Tags[m]
 		}
 	}
+	metronomeProductDetails.StartingAt = source.StartingAt
 	metronomeProductDetails.CreatedAt = source.CreatedAt
 	metronomeProductDetails.CreatedBy = source.CreatedBy
-	metronomeProductDetails.BillableMetricID = source.BillableMetricID
 	return metronomeProductDetails
 }

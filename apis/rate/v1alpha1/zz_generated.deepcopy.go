@@ -196,6 +196,16 @@ func (in *RateParameters) DeepCopyInto(out *RateParameters) {
 		*out = new(v1.Selector)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ProductRef != nil {
+		in, out := &in.ProductRef, &out.ProductRef
+		*out = new(v1.Reference)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ProductSelector != nil {
+		in, out := &in.ProductSelector, &out.ProductSelector
+		*out = new(v1.Selector)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.PricingGroupValues != nil {
 		in, out := &in.PricingGroupValues, &out.PricingGroupValues
 		*out = make(map[string]string, len(*in))

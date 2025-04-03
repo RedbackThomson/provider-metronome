@@ -51,7 +51,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: BillableMetricSpec defines the desired state of a Release.
+            description: BillableMetricSpec defines the desired state of a BillableMetric.
             properties:
               deletionPolicy:
                 default: Delete
@@ -71,28 +71,28 @@ spec:
                 description: BillableMetricParameters represents the request payload
                   for creating a billable metric.
                 properties:
-                  aggregation_key:
+                  aggregationKey:
                     type: string
-                  aggregation_type:
+                  aggregationType:
                     type: string
-                  custom_fields:
+                  customFields:
                     additionalProperties:
                       type: string
                     type: object
-                  event_type_filter:
+                  eventTypeFilter:
                     description: EventTypeFilter defines the filter based on event
                       types.
                     properties:
-                      in_values:
+                      inValues:
                         items:
                           type: string
                         type: array
-                      not_in_values:
+                      notInValues:
                         items:
                           type: string
                         type: array
                     type: object
-                  group_keys:
+                  groupKeys:
                     items:
                       items:
                         type: string
@@ -100,19 +100,19 @@ spec:
                     type: array
                   name:
                     type: string
-                  property_filters:
+                  propertyFilters:
                     items:
                       description: PropertyFilter defines a filter on properties.
                       properties:
                         exists:
                           type: boolean
-                        in_values:
+                        inValues:
                           items:
                             type: string
                           type: array
                         name:
                           type: string
-                        not_in_values:
+                        notInValues:
                           items:
                             type: string
                           type: array
@@ -123,12 +123,12 @@ spec:
                   sql:
                     type: string
                 required:
-                - aggregation_key
-                - aggregation_type
-                - event_type_filter
-                - group_keys
+                - aggregationKey
+                - aggregationType
+                - eventTypeFilter
+                - groupKeys
                 - name
-                - property_filters
+                - propertyFilters
                 type: object
               managementPolicies:
                 default:
@@ -298,15 +298,15 @@ spec:
             - forProvider
             type: object
           status:
-            description: BillableMetricStatus represents the observed state of a Release.
+            description: BillableMetricStatus represents the observed state of a BillableMetric.
             properties:
               atProvider:
                 description: ObservedBillableMetric represents the data structure
                   of a billable metric.
                 properties:
-                  aggregation_key:
+                  aggregationKey:
                     type: string
-                  aggregation_type:
+                  aggregationType:
                     enum:
                     - count
                     - latest
@@ -314,26 +314,26 @@ spec:
                     - sum
                     - unique
                     type: string
-                  archived_at:
+                  archivedAt:
                     type: string
-                  custom_fields:
+                  customFields:
                     additionalProperties:
                       type: string
                     type: object
-                  event_type_filter:
+                  eventTypeFilter:
                     description: EventTypeFilter defines the filter based on event
                       types.
                     properties:
-                      in_values:
+                      inValues:
                         items:
                           type: string
                         type: array
-                      not_in_values:
+                      notInValues:
                         items:
                           type: string
                         type: array
                     type: object
-                  group_keys:
+                  groupKeys:
                     items:
                       items:
                         type: string
@@ -343,19 +343,19 @@ spec:
                     type: string
                   name:
                     type: string
-                  property_filters:
+                  propertyFilters:
                     items:
                       description: PropertyFilter defines a filter on properties.
                       properties:
                         exists:
                           type: boolean
-                        in_values:
+                        inValues:
                           items:
                             type: string
                           type: array
                         name:
                           type: string
-                        not_in_values:
+                        notInValues:
                           items:
                             type: string
                           type: array
@@ -366,12 +366,12 @@ spec:
                   sql:
                     type: string
                 required:
-                - aggregation_type
-                - event_type_filter
-                - group_keys
+                - aggregationType
+                - eventTypeFilter
+                - groupKeys
                 - id
                 - name
-                - property_filters
+                - propertyFilters
                 type: object
               conditions:
                 description: Conditions of the resource.

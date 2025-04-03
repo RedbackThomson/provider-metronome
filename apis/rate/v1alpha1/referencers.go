@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	productv1alpha1 "github.com/redbackthomson/provider-metronome/apis/product/v1alpha1"
 	ratecardv1alpha1 "github.com/redbackthomson/provider-metronome/apis/ratecard/v1alpha1"
 )
 
@@ -54,6 +55,26 @@ func (ra *Rate) ResolveReferences(ctx context.Context, c client.Reader) error {
 	ra.Spec.ForProvider.RateCardID = rsp.ResolvedValue
 	ra.Spec.ForProvider.RateCardRef = rsp.ResolvedReference
 
+	// Resolve spec.forProvider.ProductID
+	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: ra.Spec.ForProvider.ProductID,
+		Reference:    ra.Spec.ForProvider.ProductRef,
+		Selector:     ra.Spec.ForProvider.ProductSelector,
+		To:           reference.To{Managed: &productv1alpha1.Product{}, List: &productv1alpha1.ProductList{}},
+		Extract:      ProductID(),
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "Spec.ForProvider.ProductID")
+	}
+
+	if rsp.ResolvedValue == "" {
+		return errors.New("Spec.ForProvider.ProductID not yet resolvable")
+	}
+
+	ra.Spec.ForProvider.ProductID = rsp.ResolvedValue
+	ra.Spec.ForProvider.ProductRef = rsp.ResolvedReference
+
 	return nil
 }
 
@@ -61,6 +82,14 @@ func (ra *Rate) ResolveReferences(ctx context.Context, c client.Reader) error {
 func RateCardID() reference.ExtractValueFn {
 	return func(mg resource.Managed) string {
 		cr, _ := mg.(*ratecardv1alpha1.RateCard)
+		return cr.Status.AtProvider.ID
+	}
+}
+
+// ProductID extracts info from a kubernetes referenced object
+func ProductID() reference.ExtractValueFn {
+	return func(mg resource.Managed) string {
+		cr, _ := mg.(*productv1alpha1.Product)
 		return cr.Status.AtProvider.ID
 	}
 }

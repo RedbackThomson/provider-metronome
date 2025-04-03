@@ -58,13 +58,13 @@ type ObservedRateCard struct {
 	CustomFields   map[string]string `json:"customFields,omitempty"`
 }
 
-// RateCardSpec defines the desired state of a Release.
+// RateCardSpec defines the desired state of a RateCard.
 type RateCardSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
 	ForProvider       RateCardParameters `json:"forProvider"`
 }
 
-// RateCardStatus represents the observed state of a Release.
+// RateCardStatus represents the observed state of a RateCard.
 type RateCardStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
 	AtProvider          ObservedRateCard `json:"atProvider,omitempty"`
@@ -88,7 +88,7 @@ type RateCard struct {
 
 // +kubebuilder:object:root=true
 
-// RateCardList contains a list of Release
+// RateCardList contains a list of RateCard
 type RateCardList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

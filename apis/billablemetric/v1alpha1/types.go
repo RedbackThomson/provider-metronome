@@ -73,13 +73,13 @@ type ObservedBillableMetric struct {
 	ArchivedAt      string            `json:"archivedAt,omitempty"`
 }
 
-// BillableMetricSpec defines the desired state of a Release.
+// BillableMetricSpec defines the desired state of a BillableMetric.
 type BillableMetricSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
 	ForProvider       BillableMetricParameters `json:"forProvider"`
 }
 
-// BillableMetricStatus represents the observed state of a Release.
+// BillableMetricStatus represents the observed state of a BillableMetric.
 type BillableMetricStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
 	AtProvider          ObservedBillableMetric `json:"atProvider,omitempty"`
@@ -103,7 +103,7 @@ type BillableMetric struct {
 
 // +kubebuilder:object:root=true
 
-// BillableMetricList contains a list of Release
+// BillableMetricList contains a list of BillableMetric
 type BillableMetricList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

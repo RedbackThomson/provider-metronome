@@ -35,6 +35,7 @@ type CommitRate struct {
 
 // RateParameters represents the request payload for creating a rate card.
 type RateParameters struct {
+	// +optional
 	RateCardID string `json:"rateCardId,omitempty"`
 
 	// +optional
@@ -43,7 +44,15 @@ type RateParameters struct {
 	// +optional
 	RateCardSelector *xpv1.Selector `json:"rateCardSelector,omitempty"`
 
-	ProductID  string `json:"productId"`
+	// +optional
+	ProductID string `json:"productId"`
+
+	// +optional
+	ProductRef *xpv1.Reference `json:"productRef,omitempty"`
+
+	// +optional
+	ProductSelector *xpv1.Selector `json:"productSelector,omitempty"`
+
 	StartingAt string `json:"startingAt"`
 	Entitled   bool   `json:"entitled"`
 	RateType   string `json:"rateType"`
@@ -92,13 +101,13 @@ type ObservedRate struct {
 	PricingGroupValues map[string]string `json:"pricingGroupValues,omitempty"`
 }
 
-// RateSpec defines the desired state of a Release.
+// RateSpec defines the desired state of a Rate.
 type RateSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
 	ForProvider       RateParameters `json:"forProvider"`
 }
 
-// RateStatus represents the observed state of a Release.
+// RateStatus represents the observed state of a Rate.
 type RateStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
 	AtProvider          ObservedRate `json:"atProvider,omitempty"`
@@ -122,7 +131,7 @@ type Rate struct {
 
 // +kubebuilder:object:root=true
 
-// RateList contains a list of Release
+// RateList contains a list of Rate
 type RateList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

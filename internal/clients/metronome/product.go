@@ -37,19 +37,23 @@ type ArchiveProductRequest struct {
 	ProductID string `json:"product_id"`
 }
 
+type ArchiveProductResponse DataID
+
 type CreateProductRequest struct {
 	Name                 string              `json:"name"`
 	Type                 string              `json:"type"`
-	BillableMetricID     string              `json:"billable_metric_id"`
-	CompositeProductIDs  []string            `json:"composite_product_ids"`
-	CompositeTags        []string            `json:"composite_tags"`
+	BillableMetricID     string              `json:"billable_metric_id,omitempty"`
+	CompositeProductIDs  []string            `json:"composite_product_ids,omitempty"`
+	CompositeTags        []string            `json:"composite_tags,omitempty"`
 	ExcludeFreeUsage     bool                `json:"exclude_free_usage,omitempty"`
-	PresentationGroupKey []string            `json:"presentation_group_key"`
-	PricingGroupKey      []string            `json:"pricing_group_key"`
+	PresentationGroupKey []string            `json:"presentation_group_key,omitempty"`
+	PricingGroupKey      []string            `json:"pricing_group_key,omitempty"`
 	QuantityConversion   *QuantityConversion `json:"quantity_conversion,omitempty"`
-	QuantityRounding     *QuantityRounding   `json:"quantity_rounding"`
-	Tags                 []string            `json:"tags"`
+	QuantityRounding     *QuantityRounding   `json:"quantity_rounding,omitempty"`
+	Tags                 []string            `json:"tags,omitempty"`
 }
+
+type CreateProductResponse DataID
 
 type GetProductRequest struct {
 	ID string `json:"id"`
@@ -60,14 +64,21 @@ type ListProductsRequest struct {
 }
 
 type UpdateProductRequest struct {
-	ProductID  string `json:"product_id"`
-	Name       string `json:"name"`
-	StartingAt string `json:"starting_at"`
+	ProductID            string              `json:"product_id"`
+	StartingAt           string              `json:"starting_at"`
+	BillableMetricID     string              `json:"billable_metric_id,omitempty"`
+	CompositeProductIDs  []string            `json:"composite_product_ids,omitempty"`
+	CompositeTags        []string            `json:"composite_tags,omitempty"`
+	ExcludeFreeUsage     bool                `json:"exclude_free_usage,omitempty"`
+	Name                 string              `json:"name,omitempty"`
+	PresentationGroupKey []string            `json:"presentation_group_key,omitempty"`
+	PricingGroupKey      []string            `json:"pricing_group_key,omitempty"`
+	QuantityConversion   *QuantityConversion `json:"quantity_conversion,omitempty"`
+	QuantityRounding     *QuantityRounding   `json:"quantity_rounding,omitempty"`
+	Tags                 []string            `json:"tags,omitempty"`
 }
 
-type ArchiveProductResponse DataID
-
-type CreateProductResponse DataID
+type UpdateProductResponse DataID
 
 type GetProductResponse struct {
 	Data Product `json:"data"`
@@ -96,7 +107,7 @@ type QuantityRounding struct {
 
 type ProductDetails struct {
 	Name                 string              `json:"name"`
-	StartingAt           string              `json:"starting_at"`
+	BillableMetricID     string              `json:"billable_metric_id,omitempty"`
 	CompositeProductIDs  []string            `json:"composite_product_ids"`
 	CompositeTags        []string            `json:"composite_tags"`
 	ExcludeFreeUsage     bool                `json:"exclude_free_usage,omitempty"`
@@ -105,9 +116,9 @@ type ProductDetails struct {
 	QuantityConversion   *QuantityConversion `json:"quantity_conversion,omitempty"`
 	QuantityRounding     *QuantityRounding   `json:"quantity_rounding"`
 	Tags                 []string            `json:"tags"`
+	StartingAt           string              `json:"starting_at"`
 	CreatedAt            string              `json:"created_at"`
 	CreatedBy            string              `json:"created_by"`
-	BillableMetricID     string              `json:"billable_metric_id,omitempty"`
 }
 
 type ListProductsResponse struct {
@@ -115,16 +126,13 @@ type ListProductsResponse struct {
 	NextPage *string   `json:"next_page"`
 }
 
-type UpdateProductResponse struct {
-	Data UpdateProductData `json:"data"`
-}
-
-type UpdateProductData struct {
-	ID string `json:"id"`
-}
-
 func (c *Client) ArchiveProduct(reqData ArchiveProductRequest) (*ArchiveProductResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/products/archive", c.baseURL)
+
+	if !IsUUID(reqData.ProductID) {
+		return nil, ErrProductInvalidName
+	}
+
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -194,6 +202,11 @@ func (c *Client) CreateProduct(reqData CreateProductRequest) (*CreateProductResp
 
 func (c *Client) GetProduct(reqData GetProductRequest) (*GetProductResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/products/get", c.baseURL)
+
+	if !IsUUID(reqData.ID) {
+		return nil, ErrProductInvalidName
+	}
+
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -260,6 +273,11 @@ func (c *Client) ListProduct(reqData ListProductsRequest) (*ListProductsResponse
 
 func (c *Client) UpdateProduct(reqData UpdateProductRequest) (*UpdateProductResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/products/update", c.baseURL)
+
+	if !IsUUID(reqData.ProductID) {
+		return nil, ErrProductInvalidName
+	}
+
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
@@ -277,6 +295,9 @@ func (c *Client) UpdateProduct(reqData UpdateProductRequest) (*UpdateProductResp
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to update product")
+		}
 		return nil, errors.New("failed to update product: " + resp.Status)
 	}
 

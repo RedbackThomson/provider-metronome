@@ -51,7 +51,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: RateSpec defines the desired state of a Release.
+            description: RateSpec defines the desired state of a Rate.
             properties:
               deletionPolicy:
                 default: Delete
@@ -71,11 +71,11 @@ spec:
                 description: RateParameters represents the request payload for creating
                   a rate card.
                 properties:
-                  commit_rate:
+                  commitRate:
                     properties:
                       price:
                         type: number
-                      rate_type:
+                      rateType:
                         type: string
                       tiers:
                         items:
@@ -91,30 +91,30 @@ spec:
                         type: array
                     required:
                     - price
-                    - rate_type
+                    - rateType
                     - tiers
                     type: object
-                  credit_type_id:
+                  creditTypeId:
                     type: string
-                  ending_before:
+                  endingBefore:
                     type: string
                   entitled:
                     type: boolean
-                  is_prorated:
+                  isProrated:
                     type: boolean
                   price:
+                    description: |-
+                      Price is the default price. For FLAT and SUBSCRIPTION rateType, this
+                      must be >=0 and the unit is **CENTS**. For PERCENTAGE rateType, this is
+                      a decimal fraction, e.g. use 0.1 for 10%; this must be >=0 and <=1.
                     type: number
-                  pricing_group_values:
+                  pricingGroupValues:
                     additionalProperties:
                       type: string
                     type: object
-                  product_id:
+                  productId:
                     type: string
-                  quantity:
-                    type: number
-                  rate_card_id:
-                    type: string
-                  rate_card_ref:
+                  productRef:
                     description: A Reference to a named object.
                     properties:
                       name:
@@ -148,7 +148,7 @@ spec:
                     required:
                     - name
                     type: object
-                  rate_card_selector:
+                  productSelector:
                     description: A Selector selects an object.
                     properties:
                       matchControllerRef:
@@ -188,9 +188,87 @@ spec:
                             type: string
                         type: object
                     type: object
-                  rate_type:
+                  quantity:
+                    type: number
+                  rateCardId:
                     type: string
-                  starting_at:
+                  rateCardRef:
+                    description: A Reference to a named object.
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                      policy:
+                        description: Policies for referencing.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  rateCardSelector:
+                    description: A Selector selects an object.
+                    properties:
+                      matchControllerRef:
+                        description: |-
+                          MatchControllerRef ensures an object with the same controller reference
+                          as the selecting object is selected.
+                        type: boolean
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: MatchLabels ensures an object with matching labels
+                          is selected.
+                        type: object
+                      policy:
+                        description: Policies for selection.
+                        properties:
+                          resolution:
+                            default: Required
+                            description: |-
+                              Resolution specifies whether resolution of this reference is required.
+                              The default is 'Required', which means the reconcile will fail if the
+                              reference cannot be resolved. 'Optional' means this reference will be
+                              a no-op if it cannot be resolved.
+                            enum:
+                            - Required
+                            - Optional
+                            type: string
+                          resolve:
+                            description: |-
+                              Resolve specifies when this reference should be resolved. The default
+                              is 'IfNotPresent', which will attempt to resolve the reference only when
+                              the corresponding field is not present. Use 'Always' to resolve the
+                              reference on every reconcile.
+                            enum:
+                            - Always
+                            - IfNotPresent
+                            type: string
+                        type: object
+                    type: object
+                  rateType:
+                    type: string
+                  startingAt:
                     type: string
                   tiers:
                     items:
@@ -204,13 +282,12 @@ spec:
                       - size
                       type: object
                     type: array
-                  use_list_prices:
+                  useListPrices:
                     type: boolean
                 required:
                 - entitled
-                - product_id
-                - rate_type
-                - starting_at
+                - rateType
+                - startingAt
                 type: object
               managementPolicies:
                 default:
@@ -380,17 +457,17 @@ spec:
             - forProvider
             type: object
           status:
-            description: RateStatus represents the observed state of a Release.
+            description: RateStatus represents the observed state of a Rate.
             properties:
               atProvider:
                 description: ObservedRate represents the data structure of a rate
                   card.
                 properties:
-                  commit_rate:
+                  commitRate:
                     properties:
                       price:
                         type: number
-                      rate_type:
+                      rateType:
                         type: string
                       tiers:
                         items:
@@ -406,32 +483,32 @@ spec:
                         type: array
                     required:
                     - price
-                    - rate_type
+                    - rateType
                     - tiers
                     type: object
-                  ending_before:
+                  endingBefore:
                     type: string
                   entitled:
                     type: boolean
-                  pricing_group_values:
+                  pricingGroupValues:
                     additionalProperties:
                       type: string
                     type: object
-                  product_custom_fields:
+                  productCustomFields:
                     additionalProperties:
                       type: string
                     type: object
-                  product_id:
+                  productId:
                     type: string
-                  product_name:
+                  productName:
                     type: string
-                  product_tags:
+                  productTags:
                     items:
                       type: string
                     type: array
                   rate:
                     properties:
-                      credit_type:
+                      creditType:
                         properties:
                           id:
                             type: string
@@ -441,17 +518,17 @@ spec:
                         - id
                         - name
                         type: object
-                      is_prorated:
+                      isProrated:
                         type: boolean
                       price:
                         type: number
-                      pricing_group_values:
+                      pricingGroupValues:
                         additionalProperties:
                           type: string
                         type: object
                       quantity:
                         type: number
-                      rate_type:
+                      rateType:
                         type: string
                       tiers:
                         items:
@@ -465,21 +542,21 @@ spec:
                           - size
                           type: object
                         type: array
-                      use_list_prices:
+                      useListPrices:
                         type: boolean
                     required:
-                    - rate_type
+                    - rateType
                     type: object
-                  starting_at:
+                  startingAt:
                     type: string
                 required:
                 - entitled
-                - product_custom_fields
-                - product_id
-                - product_name
-                - product_tags
+                - productCustomFields
+                - productId
+                - productName
+                - productTags
                 - rate
-                - starting_at
+                - startingAt
                 type: object
               conditions:
                 description: Conditions of the resource.
