@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	billablemetricv1alpha1 "github.com/redbackthomson/provider-metronome/apis/billablemetric/v1alpha1"
+	customfieldkeyv1alpha1 "github.com/redbackthomson/provider-metronome/apis/customfieldkey/v1alpha1"
 	productv1alpha1 "github.com/redbackthomson/provider-metronome/apis/product/v1alpha1"
 	ratev1alpha1 "github.com/redbackthomson/provider-metronome/apis/rate/v1alpha1"
 	ratecardv1alpha1 "github.com/redbackthomson/provider-metronome/apis/ratecard/v1alpha1"
@@ -32,6 +33,7 @@ func init() {
 	AddToSchemes = append(AddToSchemes,
 		metronomev1alpha1.SchemeBuilder.AddToScheme,
 		billablemetricv1alpha1.SchemeBuilder.AddToScheme,
+		customfieldkeyv1alpha1.SchemeBuilder.AddToScheme,
 		productv1alpha1.SchemeBuilder.AddToScheme,
 		ratecardv1alpha1.SchemeBuilder.AddToScheme,
 		ratev1alpha1.SchemeBuilder.AddToScheme,

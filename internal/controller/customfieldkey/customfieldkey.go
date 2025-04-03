@@ -14,14 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package rate
+package customfieldkey
 
 import (
 	"context"
-	"slices"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -36,26 +33,26 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 
-	"github.com/redbackthomson/provider-metronome/apis/rate/v1alpha1"
+	"github.com/redbackthomson/provider-metronome/apis/customfieldkey/v1alpha1"
 	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
 	metronomeClient "github.com/redbackthomson/provider-metronome/internal/clients/metronome"
 	"github.com/redbackthomson/provider-metronome/internal/converters"
 )
 
 const (
-	errNotRate              = "managed resource is not a Rate custom resource"
+	errNotCustomFieldKey    = "managed resource is not a CustomFieldKey custom resource"
 	errProviderConfigNotSet = "provider config is not set"
 	errGetProviderConfig    = "cannot get provider config"
 	errGetCreds             = "failed to create credentials from provider config"
 	errFailedToTrackUsage   = "cannot track provider config usage"
-	errGetRate              = "failed to get rate"
-	errCreateRate           = "failed to create rate"
-	errArchiveRate          = "failed to archive rate"
+	errGetCustomFieldKey    = "failed to get custom field key"
+	errCreateCustomFieldKey = "failed to create custom field key"
+	errDeleteCustomFieldKey = "failed to delete custom field key"
 )
 
-// Setup adds a controller that reconciles Rate managed resources.
+// Setup adds a controller that reconciles CustomFieldKey managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
-	name := managed.ControllerName(v1alpha1.RateGroupKind)
+	name := managed.ControllerName(v1alpha1.CustomFieldKeyGroupKind)
 
 	reconcilerOptions := []managed.ReconcilerOption{
 		managed.WithExternalConnecter(&connector{
@@ -76,18 +73,18 @@ func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 	}
 
 	if err := mgr.Add(statemetrics.NewMRStateRecorder(
-		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.RateList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
+		mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.CustomFieldKeyList{}, o.MetricOptions.PollStateMetricInterval)); err != nil {
 		return err
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1alpha1.RateGroupVersionKind),
+		resource.ManagedKind(v1alpha1.CustomFieldKeyGroupVersionKind),
 		reconcilerOptions...,
 	)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&v1alpha1.Rate{}).
+		For(&v1alpha1.CustomFieldKey{}).
 		WithOptions(o.ForControllerRuntime()).
 		Complete(r)
 }
@@ -102,9 +99,9 @@ type connector struct {
 }
 
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) { //nolint:gocyclo
-	cr, ok := mg.(*v1alpha1.Rate)
+	cr, ok := mg.(*v1alpha1.CustomFieldKey)
 	if !ok {
-		return nil, errors.New(errNotRate)
+		return nil, errors.New(errNotCustomFieldKey)
 	}
 	l := c.logger.WithValues("request", cr.Name)
 
@@ -149,38 +146,32 @@ func (e *metronomeExternal) Disconnect(ctx context.Context) error {
 }
 
 // Observe checks to see if the resource already exists. Metronome doesn't give
-// rates a unique ID, so the only way to know if we've already created one is to
-// search through all of the existing rates (with a bit of server-side
-// filtering) and compare the spec against each of them. If our spec matches an
-// existing rate, then we will assume we created it, otherwise we assume it
-// doesn't exist.
+// custom field keys a unique ID, so the only way to know if we've already
+// created one is to search through all of the existing custom fiel dkeys (with
+// a bit of server-side filtering) and compare the spec against each of them. If
+// our spec matches an existing custom field key, then we will assume we created
+// it, otherwise we assume it doesn't exist.
 func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.Rate)
+	cr, ok := mg.(*v1alpha1.CustomFieldKey)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotRate)
+		return managed.ExternalObservation{}, errors.New(errNotCustomFieldKey)
 	}
 
 	e.logger.Debug("Observing")
 
-	// no such thing as "deleting" a rate, so don't block on observe
+	// no such thing as "deleting" a customfieldkey, so don't block on observe
 	if cr.DeletionTimestamp != nil {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	var foundRate *metronomeClient.Rate
+	var foundCustomFieldKey *metronomeClient.CustomFieldKey
 	nextPage := ""
 	for true {
-		res, err := e.metronome.GetRates(metronomeClient.GetRatesRequest{
-			RateCardID: cr.Spec.ForProvider.RateCardID,
-			At:         cr.Spec.ForProvider.StartingAt,
-			Selectors: []metronomeClient.RateSelector{{
-				PricingGroupValues: cr.Spec.ForProvider.PricingGroupValues,
-				ProductID:          cr.Spec.ForProvider.ProductID,
-			}},
+		res, err := e.metronome.ListCustomFieldKeys(metronomeClient.ListCustomFieldKeysRequest{
+			Entities: []string{cr.Spec.ForProvider.Entity},
 		}, nextPage)
 		if err != nil {
-			// the external name isn't valid
-			return managed.ExternalObservation{}, errors.Wrap(err, errGetRate)
+			return managed.ExternalObservation{}, errors.Wrap(err, errGetCustomFieldKey)
 		}
 
 		if res == nil {
@@ -189,8 +180,8 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 
 		found := false
 		for _, r := range res.Data {
-			if e.isUpToDate(cr, &r) {
-				foundRate = &r
+			if r.Key == cr.Spec.ForProvider.Key && r.Entity == cr.Spec.ForProvider.Entity {
+				foundCustomFieldKey = &r
 				found = true
 			}
 		}
@@ -204,105 +195,67 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 		}
 	}
 
-	if foundRate == nil {
+	if foundCustomFieldKey == nil {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
-	current := cr.Spec.ForProvider.DeepCopy()
-	if err := lateInitialize(&cr.Spec.ForProvider, foundRate); err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(err, errGetRate)
-	}
-	isLateInitialized := !cmp.Equal(current, &cr.Spec.ForProvider)
-
-	converter := &converters.RateConverterImpl{}
-	cr.Status.AtProvider = *converter.FromRate(foundRate)
+	converter := &converters.CustomFieldKeyConverterImpl{}
+	cr.Status.AtProvider = *converter.FromCustomFieldKey(foundCustomFieldKey)
 	cr.SetConditions(xpv1.Available())
 
+	upToDate := foundCustomFieldKey.EnforceUniqueness == cr.Spec.ForProvider.EnforceUniqueness
+
 	return managed.ExternalObservation{
-		ResourceExists:          true,
-		ResourceUpToDate:        true,
-		ResourceLateInitialized: isLateInitialized,
+		ResourceExists:   true,
+		ResourceUpToDate: upToDate,
 	}, nil
 }
 
 func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.Rate)
+	cr, ok := mg.(*v1alpha1.CustomFieldKey)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotRate)
+		return managed.ExternalCreation{}, errors.New(errNotCustomFieldKey)
 	}
 
 	e.logger.Debug("Creating")
 
-	converter := &converters.RateConverterImpl{}
-	req := converter.FromRateSpec(&cr.Spec.ForProvider)
+	converter := &converters.CustomFieldKeyConverterImpl{}
+	req := converter.FromCustomFieldKeySpec(&cr.Spec.ForProvider)
 
-	_, err := e.metronome.AddRate(*req)
+	err := e.metronome.CreateCustomFieldKey(*req)
 	if err != nil {
-		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRate)
+		return managed.ExternalCreation{}, errors.Wrap(err, errCreateCustomFieldKey)
 	}
 
 	return managed.ExternalCreation{}, nil
 }
 
 func (e *metronomeExternal) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	_, ok := mg.(*v1alpha1.Rate)
+	_, ok := mg.(*v1alpha1.CustomFieldKey)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotRate)
+		return managed.ExternalUpdate{}, errors.New(errNotCustomFieldKey)
 	}
 
 	e.logger.Debug("Updating")
 
-	return managed.ExternalUpdate{}, errors.New("updating a rate is not supported")
+	return managed.ExternalUpdate{}, errors.New("updating a custom field key is not supported")
 }
 
 func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+	cr, ok := mg.(*v1alpha1.CustomFieldKey)
+	if !ok {
+		return managed.ExternalDelete{}, errors.New(errNotCustomFieldKey)
+	}
+
+	e.logger.Debug("Deleting")
+
+	err := e.metronome.DeleteCustomFieldKey(metronomeClient.DeleteCustomFieldKeyRequest{
+		Entity: cr.Spec.ForProvider.Entity,
+		Key:    cr.Spec.ForProvider.Key,
+	})
+	if err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, errDeleteCustomFieldKey)
+	}
+
 	return managed.ExternalDelete{}, nil
-}
-
-func (e *metronomeExternal) isUpToDate(cr *v1alpha1.Rate, r *metronomeClient.Rate) bool {
-	spec := &cr.Spec.ForProvider
-
-	converter := &converters.RateConverterImpl{}
-	params := converter.FromRateToParameters(r)
-
-	sortTiers := func(a, b v1alpha1.Tier) int {
-		if a.Price < b.Price {
-			return 1
-		} else if a.Price > b.Price {
-			return -1
-		} else {
-			if a.Size < b.Size {
-				return 1
-			} else if a.Size > b.Size {
-				return -1
-			}
-		}
-		return 0
-	}
-
-	slices.SortFunc(spec.Tiers, sortTiers)
-	slices.SortFunc(params.Tiers, sortTiers)
-
-	// don't compare late initialized fields if they haven't been set
-	if spec.CreditTypeID == "" {
-		params.CreditTypeID = ""
-	}
-
-	opts := []cmp.Option{
-		cmpopts.EquateEmpty(),
-		cmpopts.IgnoreFields(v1alpha1.RateParameters{},
-			"RateCardID",
-		),
-	}
-
-	return cmp.Equal(spec, params, opts...)
-}
-
-func lateInitialize(in *v1alpha1.RateParameters, r *metronomeClient.Rate) error {
-	if in == nil || r == nil {
-		return nil
-	}
-	in.CreditTypeID = r.Details.CreditType.ID
-
-	return nil
 }

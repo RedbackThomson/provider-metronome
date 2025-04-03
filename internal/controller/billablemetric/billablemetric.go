@@ -50,8 +50,8 @@ const (
 	errGetCreds                  = "failed to create credentials from provider config"
 	errFailedToTrackUsage        = "cannot track provider config usage"
 	errFailedToGetBillableMetric = "failed to get billable metric"
-	errCreateBillableMetric      = "cannot create billable metric"
-	errArchiveBillableMetric     = "cannot archive billable metric"
+	errCreateBillableMetric      = "failed to create billable metric"
+	errArchiveBillableMetric     = "failed to archive billable metric"
 )
 
 // Setup adds a controller that reconciles BillableMetric managed resources.

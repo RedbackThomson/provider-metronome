@@ -23,6 +23,7 @@ import (
 
 	"github.com/redbackthomson/provider-metronome/internal/controller/billablemetric"
 	"github.com/redbackthomson/provider-metronome/internal/controller/config"
+	"github.com/redbackthomson/provider-metronome/internal/controller/customfieldkey"
 	"github.com/redbackthomson/provider-metronome/internal/controller/product"
 	"github.com/redbackthomson/provider-metronome/internal/controller/rate"
 	"github.com/redbackthomson/provider-metronome/internal/controller/ratecard"
@@ -35,6 +36,9 @@ func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 		return err
 	}
 	if err := billablemetric.Setup(mgr, o, baseUrl); err != nil {
+		return err
+	}
+	if err := customfieldkey.Setup(mgr, o, baseUrl); err != nil {
 		return err
 	}
 	if err := product.Setup(mgr, o, baseUrl); err != nil {

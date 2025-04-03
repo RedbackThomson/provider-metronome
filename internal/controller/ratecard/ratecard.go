@@ -50,8 +50,8 @@ const (
 	errGetCreds             = "failed to create credentials from provider config"
 	errFailedToTrackUsage   = "cannot track provider config usage"
 	errGetRateCard          = "failed to get rate card"
-	errCreateRateCard       = "cannot create rate card"
-	errArchiveRateCard      = "cannot archive rate card"
+	errCreateRateCard       = "failed to create rate card"
+	errArchiveRateCard      = "failed to archive rate card"
 )
 
 // Setup adds a controller that reconciles RateCard managed resources.

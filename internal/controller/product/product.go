@@ -50,9 +50,9 @@ const (
 	errGetCreds             = "failed to create credentials from provider config"
 	errFailedToTrackUsage   = "cannot track provider config usage"
 	errGetProduct           = "failed to get product"
-	errCreateProduct        = "cannot create product"
-	errUpdateProduct        = "cannot update product"
-	errArchiveProduct       = "cannot archive product"
+	errCreateProduct        = "failed to create product"
+	errUpdateProduct        = "failed to update product"
+	errArchiveProduct       = "failed to archive product"
 	errNoID                 = "product does not have ID"
 	errNoStartingAt         = "forProvider.startingAt is required for updates"
 )

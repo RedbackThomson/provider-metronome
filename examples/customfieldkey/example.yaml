@@ -1,0 +1,11 @@
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: CustomFieldKey
+metadata:
+  name: example-custom-field-key
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    entity: customer
+    key: x_account_id
+    enforceUniqueness: true
