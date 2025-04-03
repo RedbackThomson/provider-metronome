@@ -240,6 +240,8 @@ func (c *ProductConverterImpl) ToProductUpdate(source *v1alpha1.ProductParameter
 }
 func (c *ProductConverterImpl) metronomeProductDetailsToV1alpha1ProductDetails(source metronome.ProductDetails) v1alpha1.ProductDetails {
 	var v1alpha1ProductDetails v1alpha1.ProductDetails
+	v1alpha1ProductDetails.CreatedAt = source.CreatedAt
+	v1alpha1ProductDetails.CreatedBy = source.CreatedBy
 	v1alpha1ProductDetails.Name = source.Name
 	v1alpha1ProductDetails.StartingAt = source.StartingAt
 	if source.CompositeProductIDs != nil {
@@ -275,8 +277,6 @@ func (c *ProductConverterImpl) metronomeProductDetailsToV1alpha1ProductDetails(s
 			v1alpha1ProductDetails.Tags[m] = source.Tags[m]
 		}
 	}
-	v1alpha1ProductDetails.CreatedAt = source.CreatedAt
-	v1alpha1ProductDetails.CreatedBy = source.CreatedBy
 	v1alpha1ProductDetails.BillableMetricID = source.BillableMetricID
 	return v1alpha1ProductDetails
 }

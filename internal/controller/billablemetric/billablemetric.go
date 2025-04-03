@@ -252,7 +252,7 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 }
 
 func isUpToDate(cr *v1alpha1.BillableMetric, metric *metronomeClient.BillableMetric) (bool, string) {
-	spec := &cr.Spec.ForProvider
+	spec := cr.Spec.ForProvider.DeepCopy()
 
 	converter := &converters.BillableMetricConverterImpl{}
 	params := converter.FromBillableMetricToParameters(metric)

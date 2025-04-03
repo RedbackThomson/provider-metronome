@@ -45,7 +45,6 @@ type RateConverter interface {
 	// goverter:map Details.RateType RateType
 	// goverter:map Details.IsProrated IsProrated
 	// goverter:map Details.Price Price
-	// goverter:map Details.PricingGroupValues PricingGroupValues
 	// goverter:map Details.Quantity Quantity
 	// goverter:map Details.Tiers Tiers
 	// goverter:map Details.UseListPrices UseListPrices

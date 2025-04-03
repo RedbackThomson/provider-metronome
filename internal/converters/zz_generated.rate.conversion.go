@@ -85,9 +85,9 @@ func (c *RateConverterImpl) FromRateToParameters(source *metronome.Rate) *v1alph
 		v1alpha1RateParameters.Entitled = (*source).Entitled
 		v1alpha1RateParameters.RateType = (*source).Details.RateType
 		v1alpha1RateParameters.Price = (*source).Details.Price
-		if (*source).Details.PricingGroupValues != nil {
-			v1alpha1RateParameters.PricingGroupValues = make(map[string]string, len((*source).Details.PricingGroupValues))
-			for key, value := range (*source).Details.PricingGroupValues {
+		if (*source).PricingGroupValues != nil {
+			v1alpha1RateParameters.PricingGroupValues = make(map[string]string, len((*source).PricingGroupValues))
+			for key, value := range (*source).PricingGroupValues {
 				v1alpha1RateParameters.PricingGroupValues[key] = value
 			}
 		}

@@ -86,13 +86,10 @@ spec:
                               type: number
                           required:
                           - price
-                          - size
                           type: object
                         type: array
                     required:
-                    - price
                     - rateType
-                    - tiers
                     type: object
                   creditTypeId:
                     type: string
@@ -279,7 +276,6 @@ spec:
                           type: number
                       required:
                       - price
-                      - size
                       type: object
                     type: array
                   useListPrices:
@@ -478,13 +474,10 @@ spec:
                               type: number
                           required:
                           - price
-                          - size
                           type: object
                         type: array
                     required:
-                    - price
                     - rateType
-                    - tiers
                     type: object
                   endingBefore:
                     type: string
@@ -539,7 +532,6 @@ spec:
                               type: number
                           required:
                           - price
-                          - size
                           type: object
                         type: array
                       useListPrices:

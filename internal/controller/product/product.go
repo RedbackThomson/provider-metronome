@@ -285,10 +285,13 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 }
 
 func isUpToDate(cr *v1alpha1.Product, metric *metronomeClient.Product) (bool, string) {
-	spec := &cr.Spec.ForProvider
+	spec := cr.Spec.ForProvider.DeepCopy()
 
 	converter := &converters.ProductConverterImpl{}
 	params := converter.FromProductToParameters(metric)
+
+	spec.BillableMetricRef = nil
+	spec.BillableMetricSelector = nil
 
 	sort.Strings(spec.CompositeProductIDs)
 	sort.Strings(spec.CompositeTags)

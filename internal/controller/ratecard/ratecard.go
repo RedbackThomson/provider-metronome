@@ -237,7 +237,7 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 }
 
 func isUpToDate(cr *v1alpha1.RateCard, metric *metronomeClient.RateCard) (bool, string) {
-	spec := &cr.Spec.ForProvider
+	spec := cr.Spec.ForProvider.DeepCopy()
 
 	converter := &converters.RateCardConverterImpl{}
 	params := converter.FromRateCardToParameters(metric)

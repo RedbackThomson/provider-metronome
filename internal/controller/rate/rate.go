@@ -260,7 +260,12 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 }
 
 func (e *metronomeExternal) isUpToDate(cr *v1alpha1.Rate, r *metronomeClient.Rate) bool {
-	spec := &cr.Spec.ForProvider
+	spec := cr.Spec.ForProvider.DeepCopy()
+
+	spec.ProductRef = nil
+	spec.ProductSelector = nil
+	spec.RateCardRef = nil
+	spec.RateCardSelector = nil
 
 	converter := &converters.RateConverterImpl{}
 	params := converter.FromRateToParameters(r)
@@ -294,6 +299,9 @@ func (e *metronomeExternal) isUpToDate(cr *v1alpha1.Rate, r *metronomeClient.Rat
 			"RateCardID",
 		),
 	}
+
+	diff := cmp.Diff(spec, params, opts...)
+	e.logger.Debug("comparing rates", "diff", diff)
 
 	return cmp.Equal(spec, params, opts...)
 }

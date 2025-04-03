@@ -1,0 +1,167 @@
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: BillableMetric
+metadata:
+  name: cpu-hours
+  labels:
+    product: instance-cpu
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    name: CPU Hours
+    eventTypeFilter:
+      inValues:
+        - cpu_usage
+    propertyFilters:
+      - name: cpu_hours
+        exists: True
+      - name: region
+        exists: True
+        inValues:
+          - EU
+          - NA
+      - name: machine_type
+        exists: True
+        inValues:
+          - slow
+          - fast
+    aggregationType: sum
+    aggregationKey: cpu_hours
+    groupKeys:
+        -
+          - region
+        -
+          - machine_type
+          - region
+---
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: Product
+metadata:
+  name: instance-cpu
+  labels:
+    product: instance-cpu
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    type: USAGE
+    name: Instance CPU
+    billableMetricSelector:
+      matchLabels:
+        product: instance-cpu
+    pricingGroupKey:
+      - region
+      - machine_type
+    presentationGroupKey:
+      - region
+---
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: RateCard
+metadata:
+  name: instance-cpu-rates
+  labels:
+    product: instance-cpu
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    name: Instance CPU Rates
+    description: Instance CPU rate card
+    aliases:
+      - name: instance-cpu
+---
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: Rate
+metadata:
+  name: instance-cpu-us-west-1-d1-large
+  labels:
+    product: instance-cpu
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    rateCardSelector:
+      matchLabels:
+        product: instance-cpu
+    productSelector:
+      matchLabels:
+        product: instance-cpu
+    startingAt: '2025-01-01T00:00:00.000Z'
+    entitled: true
+    rateType: FLAT
+    price: 210
+    pricingGroupValues:
+      machine_type: d1.large
+      region: us-west-1
+---
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: Rate
+metadata:
+  name: instance-cpu-us-west-1-d1-medium
+  labels:
+    product: instance-cpu
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    rateCardSelector:
+      matchLabels:
+        product: instance-cpu
+    productSelector:
+      matchLabels:
+        product: instance-cpu
+    startingAt: '2025-01-01T00:00:00.000Z'
+    entitled: true
+    rateType: FLAT
+    price: 110
+    pricingGroupValues:
+      machine_type: d1.medium
+      region: us-west-1
+---
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: Rate
+metadata:
+  name: instance-cpu-us-east-1-d1-large
+  labels:
+    product: instance-cpu
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    rateCardSelector:
+      matchLabels:
+        product: instance-cpu
+    productSelector:
+      matchLabels:
+        product: instance-cpu
+    startingAt: '2025-01-01T00:00:00.000Z'
+    entitled: true
+    rateType: FLAT
+    price: 200
+    pricingGroupValues:
+      machine_type: d1.large
+      region: us-east-1
+---
+apiVersion: metronome.crossplane.io/v1alpha1
+kind: Rate
+metadata:
+  name: instance-cpu-us-east-1-d1-medium
+  labels:
+    product: instance-cpu
+spec:
+  providerConfigRef:
+    name: provider-metronome
+  forProvider:
+    rateCardSelector:
+      matchLabels:
+        product: instance-cpu
+    productSelector:
+      matchLabels:
+        product: instance-cpu
+    startingAt: '2025-01-01T00:00:00.000Z'
+    entitled: true
+    rateType: FLAT
+    price: 100
+    pricingGroupValues:
+      machine_type: d1.medium
+      region: us-east-1

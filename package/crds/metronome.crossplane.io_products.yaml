@@ -177,7 +177,6 @@ spec:
                         type: string
                     required:
                     - conversionFactor
-                    - name
                     - operation
                     type: object
                   quantityRounding:
@@ -415,7 +414,6 @@ spec:
                             type: string
                         required:
                         - conversionFactor
-                        - name
                         - operation
                         type: object
                       quantityRounding:
@@ -435,16 +433,9 @@ spec:
                           type: string
                         type: array
                     required:
-                    - compositeProductIds
-                    - compositeTags
                     - createdAt
                     - createdBy
                     - name
-                    - presentationGroupKey
-                    - pricingGroupKey
-                    - quantityRounding
-                    - startingAt
-                    - tags
                     type: object
                   customFields:
                     additionalProperties:
@@ -490,7 +481,6 @@ spec:
                             type: string
                         required:
                         - conversionFactor
-                        - name
                         - operation
                         type: object
                       quantityRounding:
@@ -510,16 +500,9 @@ spec:
                           type: string
                         type: array
                     required:
-                    - compositeProductIds
-                    - compositeTags
                     - createdAt
                     - createdBy
                     - name
-                    - presentationGroupKey
-                    - pricingGroupKey
-                    - quantityRounding
-                    - startingAt
-                    - tags
                     type: object
                   type:
                     type: string
@@ -562,7 +545,6 @@ spec:
                               type: string
                           required:
                           - conversionFactor
-                          - name
                           - operation
                           type: object
                         quantityRounding:
@@ -582,22 +564,13 @@ spec:
                             type: string
                           type: array
                       required:
-                      - compositeProductIds
-                      - compositeTags
                       - createdAt
                       - createdBy
                       - name
-                      - presentationGroupKey
-                      - pricingGroupKey
-                      - quantityRounding
-                      - startingAt
-                      - tags
                       type: object
                     type: array
                 required:
-                - archivedAt
                 - current
-                - customFields
                 - id
                 - initial
                 - type

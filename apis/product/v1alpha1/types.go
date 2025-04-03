@@ -25,7 +25,7 @@ import (
 type QuantityConversion struct {
 	ConversionFactor float64 `json:"conversionFactor"`
 	Operation        string  `json:"operation"`
-	Name             string  `json:"name"`
+	Name             string  `json:"name,omitempty"`
 }
 
 type QuantityRounding struct {
@@ -57,18 +57,18 @@ type ProductParameters struct {
 }
 
 type ProductDetails struct {
-	Name                 string              `json:"name"`
-	StartingAt           string              `json:"startingAt"`
-	CompositeProductIDs  []string            `json:"compositeProductIds"`
-	CompositeTags        []string            `json:"compositeTags"`
-	ExcludeFreeUsage     bool                `json:"excludeFreeUsage,omitempty"`
-	PresentationGroupKey []string            `json:"presentationGroupKey"`
-	PricingGroupKey      []string            `json:"pricingGroupKey"`
-	QuantityConversion   *QuantityConversion `json:"quantityConversion,omitempty"`
-	QuantityRounding     *QuantityRounding   `json:"quantityRounding"`
-	Tags                 []string            `json:"tags"`
 	CreatedAt            string              `json:"createdAt"`
 	CreatedBy            string              `json:"createdBy"`
+	Name                 string              `json:"name"`
+	StartingAt           string              `json:"startingAt,omitempty"`
+	CompositeProductIDs  []string            `json:"compositeProductIds,omitempty"`
+	CompositeTags        []string            `json:"compositeTags,omitempty"`
+	ExcludeFreeUsage     bool                `json:"excludeFreeUsage,omitempty"`
+	PresentationGroupKey []string            `json:"presentationGroupKey,omitempty"`
+	PricingGroupKey      []string            `json:"pricingGroupKey,omitempty"`
+	QuantityConversion   *QuantityConversion `json:"quantityConversion,omitempty"`
+	QuantityRounding     *QuantityRounding   `json:"quantityRounding,omitempty"`
+	Tags                 []string            `json:"tags,omitempty"`
 	BillableMetricID     string              `json:"billableMetricId,omitempty"`
 }
 
@@ -79,8 +79,8 @@ type ObservedProduct struct {
 	Initial      ProductDetails    `json:"initial"`
 	Current      ProductDetails    `json:"current"`
 	Updates      []ProductDetails  `json:"updates"`
-	CustomFields map[string]string `json:"customFields"`
-	ArchivedAt   string            `json:"archivedAt"`
+	CustomFields map[string]string `json:"customFields,omitempty"`
+	ArchivedAt   string            `json:"archivedAt,omitempty"`
 }
 
 // ProductSpec defines the desired state of a Product.

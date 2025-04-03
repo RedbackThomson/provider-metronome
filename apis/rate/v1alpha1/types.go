@@ -24,13 +24,13 @@ import (
 
 type Tier struct {
 	Price float64 `json:"price"`
-	Size  float64 `json:"size"`
+	Size  float64 `json:"size,omitempty"`
 }
 
 type CommitRate struct {
 	RateType string  `json:"rateType"`
-	Price    float64 `json:"price"`
-	Tiers    []Tier  `json:"tiers"`
+	Price    float64 `json:"price,omitempty"`
+	Tiers    []Tier  `json:"tiers,omitempty"`
 }
 
 // RateParameters represents the request payload for creating a rate card.
