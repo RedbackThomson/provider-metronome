@@ -9,7 +9,11 @@ of [Metronome](https://metronome.com) resources provisioned by Crossplane.
 
 The provider currently supports the following resources:
 
-<None>
+- [BillableMetric](https://docs.metronome.com/api/#billable-metrics)
+- [CustomFieldKey](https://docs.metronome.com/api/#custom-fields)
+- [Product](https://docs.metronome.com/api/#products)
+- [Rate](https://docs.metronome.com/api/#rate-cards)
+- [RateCard](https://docs.metronome.com/api/#rate-cards)
 
 ## Install
 

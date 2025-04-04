@@ -2,17 +2,25 @@
 set -aeuo pipefail
 
 echo "Running setup.sh"
+echo "Creating cloud credential secret..."
+${KUBECTL} -n upbound-system create secret generic provider-secret --from-literal=credentials="${UPTEST_CLOUD_CREDENTIALS}" --dry-run=client -o yaml | ${KUBECTL} apply -f -
 
-echo "Creating the provider config with cluster admin permissions in cluster..."
-SA=$(${KUBECTL} -n crossplane-system get sa -o name | grep provider-helm | sed -e 's|serviceaccount\/|crossplane-system:|g')
-${KUBECTL} create clusterrolebinding provider-helm-admin-binding --clusterrole cluster-admin --serviceaccount="${SA}" --dry-run=client -o yaml | ${KUBECTL} apply -f -
+echo "Waiting until provider is healthy..."
+${KUBECTL} wait provider.pkg --all --for condition=Healthy --timeout 5m
+
+echo "Waiting for all pods to come online..."
+${KUBECTL} -n upbound-system wait --for=condition=Available deployment --all --timeout=5m
 
 cat <<EOF | ${KUBECTL} apply -f -
 apiVersion: metronome.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
-  name: helm-provider
+  name: default
 spec:
   credentials:
-    source: InjectedIdentity
+    source: Secret
+    secretRef:
+      name: provider-secret
+      namespace: upbound-system
+      key: credentials
 EOF
