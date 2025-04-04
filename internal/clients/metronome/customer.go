@@ -17,6 +17,7 @@ limitations under the License.
 package metronome
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -78,14 +79,14 @@ type UpdateAliasesRequest struct {
 	IngestAliases []string `json:"ingest_aliases"`
 }
 
-func (c *Client) CreateCustomer(reqData CreateCustomerRequest) (*CreateCustomerResponse, error) {
+func (c *Client) CreateCustomer(ctx context.Context, reqData CreateCustomerRequest) (*CreateCustomerResponse, error) {
 	url := fmt.Sprintf("%s/v1/customers", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +95,7 @@ func (c *Client) CreateCustomer(reqData CreateCustomerRequest) (*CreateCustomerR
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -111,10 +112,10 @@ func (c *Client) CreateCustomer(reqData CreateCustomerRequest) (*CreateCustomerR
 	return &response, nil
 }
 
-func (c *Client) GetCustomer(customerID string) (*GetCustomerResponse, error) {
+func (c *Client) GetCustomer(ctx context.Context, customerID string) (*GetCustomerResponse, error) {
 	url := fmt.Sprintf("%s/v1/customers/%s", c.baseURL, customerID)
 
-	req, err := c.newAuthenticatedRequest("GET", url, nil)
+	req, err := c.newAuthenticatedRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +124,7 @@ func (c *Client) GetCustomer(customerID string) (*GetCustomerResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -140,14 +141,14 @@ func (c *Client) GetCustomer(customerID string) (*GetCustomerResponse, error) {
 	return &response, nil
 }
 
-func (c *Client) UpdateCustomerAliases(customerID string, reqData UpdateAliasesRequest) error {
+func (c *Client) UpdateCustomerAliases(ctx context.Context, customerID string, reqData UpdateAliasesRequest) error {
 	url := fmt.Sprintf("%s/v1/customers/%s/setIngestAliases", c.baseURL, customerID)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return err
 	}
@@ -156,7 +157,7 @@ func (c *Client) UpdateCustomerAliases(customerID string, reqData UpdateAliasesR
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -168,9 +169,9 @@ func (c *Client) UpdateCustomerAliases(customerID string, reqData UpdateAliasesR
 	return nil
 }
 
-func (c *Client) ListCustomers() (*ListCustomersResponse, error) {
+func (c *Client) ListCustomers(ctx context.Context) (*ListCustomersResponse, error) {
 	url := fmt.Sprintf("%s/v1/customers", c.baseURL)
-	req, err := c.newAuthenticatedRequest("GET", url, nil)
+	req, err := c.newAuthenticatedRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +180,7 @@ func (c *Client) ListCustomers() (*ListCustomersResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {

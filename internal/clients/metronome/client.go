@@ -18,6 +18,7 @@ package metronome
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
@@ -31,8 +32,8 @@ type Client struct {
 	httpClient *http.Client
 }
 
-func (c *Client) newAuthenticatedRequest(method, url string, body []byte) (*http.Request, error) {
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+func (c *Client) newAuthenticatedRequest(ctx context.Context, method, url string, body []byte) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}

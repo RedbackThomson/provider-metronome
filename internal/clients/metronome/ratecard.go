@@ -17,6 +17,7 @@ limitations under the License.
 package metronome
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -84,7 +85,7 @@ type RateCardAlias struct {
 	Name string `json:"name"`
 }
 
-func (c *Client) GetRateCard(reqData GetRateCardRequest) (*GetRateCardResponse, error) {
+func (c *Client) GetRateCard(ctx context.Context, reqData GetRateCardRequest) (*GetRateCardResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/get", c.baseURL)
 
 	if !IsUUID(reqData.ID) {
@@ -96,7 +97,7 @@ func (c *Client) GetRateCard(reqData GetRateCardRequest) (*GetRateCardResponse, 
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +106,7 @@ func (c *Client) GetRateCard(reqData GetRateCardRequest) (*GetRateCardResponse, 
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -122,14 +123,14 @@ func (c *Client) GetRateCard(reqData GetRateCardRequest) (*GetRateCardResponse, 
 	return &response, nil
 }
 
-func (c *Client) CreateRateCard(reqData CreateRateCardRequest) (*CreateRateCardResponse, error) {
+func (c *Client) CreateRateCard(ctx context.Context, reqData CreateRateCardRequest) (*CreateRateCardResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/create", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +139,7 @@ func (c *Client) CreateRateCard(reqData CreateRateCardRequest) (*CreateRateCardR
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -155,7 +156,7 @@ func (c *Client) CreateRateCard(reqData CreateRateCardRequest) (*CreateRateCardR
 	return &response, nil
 }
 
-func (c *Client) UpdateRateCard(reqData UpdateRateCardRequest) (*UpdateRateCardResponse, error) {
+func (c *Client) UpdateRateCard(ctx context.Context, reqData UpdateRateCardRequest) (*UpdateRateCardResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/update", c.baseURL)
 
 	if !IsUUID(reqData.RateCardID) {
@@ -167,7 +168,7 @@ func (c *Client) UpdateRateCard(reqData UpdateRateCardRequest) (*UpdateRateCardR
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +177,7 @@ func (c *Client) UpdateRateCard(reqData UpdateRateCardRequest) (*UpdateRateCardR
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {

@@ -17,6 +17,7 @@ limitations under the License.
 package metronome
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -121,7 +122,7 @@ type AddRatesResponse struct {
 	} `json:"data"`
 }
 
-func (c *Client) GetRates(reqData GetRatesRequest, nextPage string) (*GetRatesResponse, error) {
+func (c *Client) GetRates(ctx context.Context, reqData GetRatesRequest, nextPage string) (*GetRatesResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/getRates", c.baseURL)
 
 	if !IsUUID(reqData.RateCardID) {
@@ -133,7 +134,7 @@ func (c *Client) GetRates(reqData GetRatesRequest, nextPage string) (*GetRatesRe
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +149,7 @@ func (c *Client) GetRates(reqData GetRatesRequest, nextPage string) (*GetRatesRe
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -165,7 +166,7 @@ func (c *Client) GetRates(reqData GetRatesRequest, nextPage string) (*GetRatesRe
 	return &response, nil
 }
 
-func (c *Client) AddRate(reqData AddRateRequest) (*AddRateResponse, error) {
+func (c *Client) AddRate(ctx context.Context, reqData AddRateRequest) (*AddRateResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/addRate", c.baseURL)
 
 	if !IsUUID(reqData.RateCardID) {
@@ -180,7 +181,7 @@ func (c *Client) AddRate(reqData AddRateRequest) (*AddRateResponse, error) {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +190,7 @@ func (c *Client) AddRate(reqData AddRateRequest) (*AddRateResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {

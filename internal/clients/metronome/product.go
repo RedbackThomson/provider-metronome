@@ -17,6 +17,7 @@ limitations under the License.
 package metronome
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -126,7 +127,7 @@ type ListProductsResponse struct {
 	NextPage *string   `json:"next_page"`
 }
 
-func (c *Client) ArchiveProduct(reqData ArchiveProductRequest) (*ArchiveProductResponse, error) {
+func (c *Client) ArchiveProduct(ctx context.Context, reqData ArchiveProductRequest) (*ArchiveProductResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/products/archive", c.baseURL)
 
 	if !IsUUID(reqData.ProductID) {
@@ -138,7 +139,7 @@ func (c *Client) ArchiveProduct(reqData ArchiveProductRequest) (*ArchiveProductR
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +148,7 @@ func (c *Client) ArchiveProduct(reqData ArchiveProductRequest) (*ArchiveProductR
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -167,14 +168,14 @@ func (c *Client) ArchiveProduct(reqData ArchiveProductRequest) (*ArchiveProductR
 	return &response, nil
 }
 
-func (c *Client) CreateProduct(reqData CreateProductRequest) (*CreateProductResponse, error) {
+func (c *Client) CreateProduct(ctx context.Context, reqData CreateProductRequest) (*CreateProductResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/products/create", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +184,7 @@ func (c *Client) CreateProduct(reqData CreateProductRequest) (*CreateProductResp
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -200,7 +201,7 @@ func (c *Client) CreateProduct(reqData CreateProductRequest) (*CreateProductResp
 	return &response, nil
 }
 
-func (c *Client) GetProduct(reqData GetProductRequest) (*GetProductResponse, error) {
+func (c *Client) GetProduct(ctx context.Context, reqData GetProductRequest) (*GetProductResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/products/get", c.baseURL)
 
 	if !IsUUID(reqData.ID) {
@@ -212,7 +213,7 @@ func (c *Client) GetProduct(reqData GetProductRequest) (*GetProductResponse, err
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +222,7 @@ func (c *Client) GetProduct(reqData GetProductRequest) (*GetProductResponse, err
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -238,14 +239,14 @@ func (c *Client) GetProduct(reqData GetProductRequest) (*GetProductResponse, err
 	return &response, nil
 }
 
-func (c *Client) ListProduct(reqData ListProductsRequest) (*ListProductsResponse, error) {
+func (c *Client) ListProduct(ctx context.Context, reqData ListProductsRequest) (*ListProductsResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/products/list", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +255,7 @@ func (c *Client) ListProduct(reqData ListProductsRequest) (*ListProductsResponse
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -271,7 +272,7 @@ func (c *Client) ListProduct(reqData ListProductsRequest) (*ListProductsResponse
 	return &response, nil
 }
 
-func (c *Client) UpdateProduct(reqData UpdateProductRequest) (*UpdateProductResponse, error) {
+func (c *Client) UpdateProduct(ctx context.Context, reqData UpdateProductRequest) (*UpdateProductResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/products/update", c.baseURL)
 
 	if !IsUUID(reqData.ProductID) {
@@ -283,7 +284,7 @@ func (c *Client) UpdateProduct(reqData UpdateProductRequest) (*UpdateProductResp
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +293,7 @@ func (c *Client) UpdateProduct(reqData UpdateProductRequest) (*UpdateProductResp
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {

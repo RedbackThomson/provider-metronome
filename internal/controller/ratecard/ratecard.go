@@ -167,7 +167,7 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 		return managed.ExternalObservation{}, nil
 	}
 
-	res, err := e.metronome.GetRateCard(metronomeClient.GetRateCardRequest{
+	res, err := e.metronome.GetRateCard(ctx, metronomeClient.GetRateCardRequest{
 		ID: id,
 	})
 	if err != nil {
@@ -208,7 +208,7 @@ func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (ma
 	converter := &converters.RateCardConverterImpl{}
 	req := converter.FromRateCardSpec(&cr.Spec.ForProvider)
 
-	res, err := e.metronome.CreateRateCard(*req)
+	res, err := e.metronome.CreateRateCard(ctx, *req)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRateCard)
 	}

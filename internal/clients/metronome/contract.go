@@ -17,6 +17,7 @@ limitations under the License.
 package metronome
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -83,7 +84,7 @@ type ListContractsResponse struct {
 	Data []Contract `json:"data"`
 }
 
-func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, error) {
+func (c *Client) GetContract(ctx context.Context, reqData GetContractRequest) (*GetContractResponse, error) {
 	url := fmt.Sprintf("%s/v2/contracts/get", c.baseURL)
 
 	if !IsUUID(reqData.ContractID) {
@@ -98,7 +99,7 @@ func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, 
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +108,7 @@ func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, 
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -124,14 +125,14 @@ func (c *Client) GetContract(reqData GetContractRequest) (*GetContractResponse, 
 	return &response, nil
 }
 
-func (c *Client) ListContracts(reqData ListContractsRequest) (*ListContractsResponse, error) {
+func (c *Client) ListContracts(ctx context.Context, reqData ListContractsRequest) (*ListContractsResponse, error) {
 	url := fmt.Sprintf("%s/v2/contracts/list", c.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +141,7 @@ func (c *Client) ListContracts(reqData ListContractsRequest) (*ListContractsResp
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {

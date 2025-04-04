@@ -17,6 +17,7 @@ limitations under the License.
 package metronome
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -54,7 +55,7 @@ type DeleteCustomFieldKeyRequest struct {
 }
 
 // CreateCustomFieldKey creates a new custom field key.
-func (c *Client) CreateCustomFieldKey(reqData CreateCustomFieldKeyRequest) error {
+func (c *Client) CreateCustomFieldKey(ctx context.Context, reqData CreateCustomFieldKeyRequest) error {
 	url := fmt.Sprintf("%s/v1/customFields/addKey", c.baseURL)
 
 	jsonData, err := json.Marshal(reqData)
@@ -62,7 +63,7 @@ func (c *Client) CreateCustomFieldKey(reqData CreateCustomFieldKeyRequest) error
 		return fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -71,7 +72,7 @@ func (c *Client) CreateCustomFieldKey(reqData CreateCustomFieldKeyRequest) error
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -84,7 +85,7 @@ func (c *Client) CreateCustomFieldKey(reqData CreateCustomFieldKeyRequest) error
 }
 
 // ListCustomFieldKeys retrieves a list of all custom field keys.
-func (c *Client) ListCustomFieldKeys(reqData ListCustomFieldKeysRequest, nextPage string) (*ListCustomFieldKeysResponse, error) {
+func (c *Client) ListCustomFieldKeys(ctx context.Context, reqData ListCustomFieldKeysRequest, nextPage string) (*ListCustomFieldKeysResponse, error) {
 	url := fmt.Sprintf("%s/v1/customFields/listKeys", c.baseURL)
 
 	jsonData, err := json.Marshal(reqData)
@@ -92,7 +93,7 @@ func (c *Client) ListCustomFieldKeys(reqData ListCustomFieldKeysRequest, nextPag
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -107,7 +108,7 @@ func (c *Client) ListCustomFieldKeys(reqData ListCustomFieldKeysRequest, nextPag
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -125,7 +126,7 @@ func (c *Client) ListCustomFieldKeys(reqData ListCustomFieldKeysRequest, nextPag
 }
 
 // DeleteCustomFieldKey deletes a custom field key by ID.
-func (c *Client) DeleteCustomFieldKey(reqData DeleteCustomFieldKeyRequest) error {
+func (c *Client) DeleteCustomFieldKey(ctx context.Context, reqData DeleteCustomFieldKeyRequest) error {
 	url := fmt.Sprintf("%s/v1/customFields/removeKey", c.baseURL)
 
 	// Prepare the request payload
@@ -135,7 +136,7 @@ func (c *Client) DeleteCustomFieldKey(reqData DeleteCustomFieldKeyRequest) error
 	}
 
 	// Create a new authenticated request
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -145,7 +146,7 @@ func (c *Client) DeleteCustomFieldKey(reqData DeleteCustomFieldKeyRequest) error
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	// Check for a successful response
 	if resp.StatusCode != http.StatusOK {

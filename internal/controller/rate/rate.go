@@ -18,6 +18,7 @@ package rate
 
 import (
 	"context"
+	"math"
 	"slices"
 
 	"github.com/google/go-cmp/cmp"
@@ -169,8 +170,8 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 
 	var foundRate *metronomeClient.Rate
 	nextPage := ""
-	for true {
-		res, err := e.metronome.GetRates(metronomeClient.GetRatesRequest{
+	for {
+		res, err := e.metronome.GetRates(ctx, metronomeClient.GetRatesRequest{
 			RateCardID: cr.Spec.ForProvider.RateCardID,
 			At:         cr.Spec.ForProvider.StartingAt,
 			Selectors: []metronomeClient.RateSelector{{
@@ -209,9 +210,7 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 	}
 
 	current := cr.Spec.ForProvider.DeepCopy()
-	if err := lateInitialize(&cr.Spec.ForProvider, foundRate); err != nil {
-		return managed.ExternalObservation{}, errors.Wrap(err, errGetRate)
-	}
+	lateInitialize(&cr.Spec.ForProvider, foundRate)
 	isLateInitialized := !cmp.Equal(current, &cr.Spec.ForProvider)
 
 	converter := &converters.RateConverterImpl{}
@@ -236,7 +235,7 @@ func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (ma
 	converter := &converters.RateConverterImpl{}
 	req := converter.FromRateSpec(&cr.Spec.ForProvider)
 
-	_, err := e.metronome.AddRate(*req)
+	_, err := e.metronome.AddRate(ctx, *req)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateRate)
 	}
@@ -271,18 +270,10 @@ func (e *metronomeExternal) isUpToDate(cr *v1alpha1.Rate, r *metronomeClient.Rat
 	params := converter.FromRateToParameters(r)
 
 	sortTiers := func(a, b v1alpha1.Tier) int {
-		if a.Price < b.Price {
-			return 1
-		} else if a.Price > b.Price {
-			return -1
-		} else {
-			if a.Size < b.Size {
-				return 1
-			} else if a.Size > b.Size {
-				return -1
-			}
+		if math.Abs(a.Price-b.Price) <= 1e-9 { // float equivalency
+			return int(a.Size - b.Size)
 		}
-		return 0
+		return int(a.Price - b.Price)
 	}
 
 	slices.SortFunc(spec.Tiers, sortTiers)
@@ -306,11 +297,6 @@ func (e *metronomeExternal) isUpToDate(cr *v1alpha1.Rate, r *metronomeClient.Rat
 	return cmp.Equal(spec, params, opts...)
 }
 
-func lateInitialize(in *v1alpha1.RateParameters, r *metronomeClient.Rate) error {
-	if in == nil || r == nil {
-		return nil
-	}
+func lateInitialize(in *v1alpha1.RateParameters, r *metronomeClient.Rate) {
 	in.CreditTypeID = r.Details.CreditType.ID
-
-	return nil
 }

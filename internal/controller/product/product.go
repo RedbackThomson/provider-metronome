@@ -165,7 +165,7 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 		return managed.ExternalObservation{}, nil
 	}
 
-	res, err := e.metronome.GetProduct(metronomeClient.GetProductRequest{
+	res, err := e.metronome.GetProduct(ctx, metronomeClient.GetProductRequest{
 		ID: id,
 	})
 	if err != nil {
@@ -212,7 +212,7 @@ func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (ma
 	converter := &converters.ProductConverterImpl{}
 	req := converter.FromProductSpec(&cr.Spec.ForProvider)
 
-	res, err := e.metronome.CreateProduct(*req)
+	res, err := e.metronome.CreateProduct(ctx, *req)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateProduct)
 	}
@@ -247,7 +247,7 @@ func (e *metronomeExternal) Update(ctx context.Context, mg resource.Managed) (ma
 	req := converter.ToProductUpdate(&cr.Spec.ForProvider)
 	req.ProductID = id
 
-	res, err := e.metronome.UpdateProduct(*req)
+	res, err := e.metronome.UpdateProduct(ctx, *req)
 	if err != nil {
 		return managed.ExternalUpdate{}, errors.Wrap(err, errUpdateProduct)
 	}
@@ -258,7 +258,7 @@ func (e *metronomeExternal) Update(ctx context.Context, mg resource.Managed) (ma
 	return managed.ExternalUpdate{}, nil
 }
 
-func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+func (e *metronomeExternal) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.Product)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotProduct)
@@ -271,7 +271,7 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 		return managed.ExternalDelete{}, nil
 	}
 
-	_, err := e.metronome.ArchiveProduct(metronomeClient.ArchiveProductRequest{
+	_, err := e.metronome.ArchiveProduct(ctx, metronomeClient.ArchiveProductRequest{
 		ProductID: id,
 	})
 	if err != nil {

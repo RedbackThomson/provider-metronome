@@ -17,7 +17,7 @@ func (e *ClientError) Error() string {
 func ParseClientError(response io.Reader) *ClientError {
 	var err ClientError
 	if err := json.NewDecoder(response).Decode(&err); err != nil {
-		return nil
+		return nil // nolint:nilerr // This isn't a client error
 	}
 	return &err
 }

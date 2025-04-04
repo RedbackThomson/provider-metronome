@@ -162,7 +162,7 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 		return managed.ExternalObservation{}, nil
 	}
 
-	metric, err := e.metronome.GetBillableMetric(id)
+	metric, err := e.metronome.GetBillableMetric(ctx, id)
 	if err != nil {
 		// the external name isn't valid
 		if errors.Is(err, metronomeClient.ErrBillableMetricInvalidName) {
@@ -203,7 +203,7 @@ func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (ma
 	converter := &converters.BillableMetricConverterImpl{}
 	req := converter.FromBillableMetricSpec(&cr.Spec.ForProvider)
 
-	res, err := e.metronome.CreateBillableMetric(*req)
+	res, err := e.metronome.CreateBillableMetric(ctx, *req)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateBillableMetric)
 	}
@@ -227,7 +227,7 @@ func (e *metronomeExternal) Update(ctx context.Context, mg resource.Managed) (ma
 	return managed.ExternalUpdate{}, errors.New("updating a billable metric is not supported")
 }
 
-func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+func (e *metronomeExternal) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.BillableMetric)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotBillableMetric)
@@ -240,7 +240,7 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 		return managed.ExternalDelete{}, nil
 	}
 
-	_, err := e.metronome.ArchiveBillableMetric(id)
+	_, err := e.metronome.ArchiveBillableMetric(ctx, id)
 	if err != nil {
 		if errors.Is(err, metronomeClient.ErrBillableMetricAlreadyArchived) {
 			return managed.ExternalDelete{}, nil

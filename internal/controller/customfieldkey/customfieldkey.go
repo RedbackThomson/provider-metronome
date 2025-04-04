@@ -166,8 +166,8 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 
 	var foundCustomFieldKey *metronomeClient.CustomFieldKey
 	nextPage := ""
-	for true {
-		res, err := e.metronome.ListCustomFieldKeys(metronomeClient.ListCustomFieldKeysRequest{
+	for {
+		res, err := e.metronome.ListCustomFieldKeys(ctx, metronomeClient.ListCustomFieldKeysRequest{
 			Entities: []string{cr.Spec.ForProvider.Entity},
 		}, nextPage)
 		if err != nil {
@@ -222,7 +222,7 @@ func (e *metronomeExternal) Create(ctx context.Context, mg resource.Managed) (ma
 	converter := &converters.CustomFieldKeyConverterImpl{}
 	req := converter.FromCustomFieldKeySpec(&cr.Spec.ForProvider)
 
-	err := e.metronome.CreateCustomFieldKey(*req)
+	err := e.metronome.CreateCustomFieldKey(ctx, *req)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, errCreateCustomFieldKey)
 	}
@@ -241,7 +241,7 @@ func (e *metronomeExternal) Update(ctx context.Context, mg resource.Managed) (ma
 	return managed.ExternalUpdate{}, errors.New("updating a custom field key is not supported")
 }
 
-func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+func (e *metronomeExternal) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
 	cr, ok := mg.(*v1alpha1.CustomFieldKey)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errNotCustomFieldKey)
@@ -249,7 +249,7 @@ func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (mana
 
 	e.logger.Debug("Deleting")
 
-	err := e.metronome.DeleteCustomFieldKey(metronomeClient.DeleteCustomFieldKeyRequest{
+	err := e.metronome.DeleteCustomFieldKey(ctx, metronomeClient.DeleteCustomFieldKeyRequest{
 		Entity: cr.Spec.ForProvider.Entity,
 		Key:    cr.Spec.ForProvider.Key,
 	})

@@ -17,6 +17,7 @@ limitations under the License.
 package metronome
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -110,7 +111,7 @@ type ArchiveBillableMetricRequest struct {
 type ArchiveBillableMetricResponse DataID
 
 // CreateBillableMetric creates a new billable metric.
-func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
+func (c *Client) CreateBillableMetric(ctx context.Context, reqData CreateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/create", c.baseURL)
 
 	jsonData, err := json.Marshal(reqData)
@@ -118,7 +119,7 @@ func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*Cre
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -127,7 +128,7 @@ func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*Cre
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -145,14 +146,14 @@ func (c *Client) CreateBillableMetric(reqData CreateBillableMetricRequest) (*Cre
 }
 
 // GetBillableMetric retrieves a billable metric by ID.
-func (c *Client) GetBillableMetric(id string) (*BillableMetric, error) {
+func (c *Client) GetBillableMetric(ctx context.Context, id string) (*BillableMetric, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
 	if !IsUUID(id) {
 		return nil, ErrBillableMetricInvalidName
 	}
 
-	req, err := c.newAuthenticatedRequest("GET", url, nil)
+	req, err := c.newAuthenticatedRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -161,7 +162,7 @@ func (c *Client) GetBillableMetric(id string) (*BillableMetric, error) {
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -181,10 +182,10 @@ func (c *Client) GetBillableMetric(id string) (*BillableMetric, error) {
 }
 
 // ListBillableMetrics retrieves a list of all billable metrics.
-func (c *Client) ListBillableMetrics() (*ListBillableMetricsResponse, error) {
+func (c *Client) ListBillableMetrics(ctx context.Context) (*ListBillableMetricsResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics", c.baseURL)
 
-	req, err := c.newAuthenticatedRequest("GET", url, nil)
+	req, err := c.newAuthenticatedRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -193,7 +194,7 @@ func (c *Client) ListBillableMetrics() (*ListBillableMetricsResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -211,7 +212,7 @@ func (c *Client) ListBillableMetrics() (*ListBillableMetricsResponse, error) {
 }
 
 // UpdateBillableMetric updates a billable metric by ID.
-func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
+func (c *Client) UpdateBillableMetric(ctx context.Context, id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
 
 	if !IsUUID(id) {
@@ -223,7 +224,7 @@ func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricReq
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := c.newAuthenticatedRequest("PUT", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "PUT", url, jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -232,7 +233,7 @@ func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricReq
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	if resp.StatusCode != http.StatusOK {
 		if c := ParseClientError(resp.Body); c != nil {
@@ -250,7 +251,7 @@ func (c *Client) UpdateBillableMetric(id string, reqData UpdateBillableMetricReq
 }
 
 // ArchiveBillableMetric archives a billable metric by ID.
-func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricResponse, error) {
+func (c *Client) ArchiveBillableMetric(ctx context.Context, id string) (*ArchiveBillableMetricResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/archive", c.baseURL)
 
 	if !IsUUID(id) {
@@ -265,7 +266,7 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 	}
 
 	// Create a new authenticated request
-	req, err := c.newAuthenticatedRequest("POST", url, jsonData)
+	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -275,7 +276,7 @@ func (c *Client) ArchiveBillableMetric(id string) (*ArchiveBillableMetricRespons
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
 
 	// Check for a successful response
 	if resp.StatusCode != http.StatusOK {
