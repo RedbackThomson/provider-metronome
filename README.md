@@ -1,4 +1,4 @@
-[![Build Actions Status](https://github.com/redbackthomson/provider-metronome/workflows/CI/badge.svg)](https://github.com/redbackthomson/provider-metronome/actions)
+[![CI](https://github.com/RedbackThomson/provider-metronome/actions/workflows/ci.yml/badge.svg)](https://github.com/RedbackThomson/provider-metronome/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/release/redbackthomson/provider-metronome/all.svg?style=flat-square)](https://github.com/redbackthomson/provider-metronome/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/redbackthomson/provider-metronome)](https://goreportcard.com/report/github.com/redbackthomson/provider-metronome)
 
