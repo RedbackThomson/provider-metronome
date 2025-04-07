@@ -29,6 +29,8 @@ Then you will need to create a `ProviderConfig` that specifies the API key
 connected to your Metronome account. This is commonly done by storing the API
 key in a secret that the `ProviderConfig` references.
 
+Examples of each of the resources can be found in the `examples/` directory.
+
 ## Developing locally
 
 **Pre-requisite:** A Kubernetes cluster with Crossplane installed
