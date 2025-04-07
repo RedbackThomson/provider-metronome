@@ -48,14 +48,10 @@ func (c *RateConverterImpl) FromRateSpec(source *v1alpha1.RateParameters) *metro
 	var pMetronomeAddRateRequest *metronome.AddRateRequest
 	if source != nil {
 		var metronomeAddRateRequest metronome.AddRateRequest
-		metronomeAddRateRequest.Entitled = (*source).Entitled
-		metronomeAddRateRequest.ProductID = (*source).ProductID
-		metronomeAddRateRequest.RateCardID = (*source).RateCardID
-		metronomeAddRateRequest.RateType = (*source).RateType
-		metronomeAddRateRequest.StartingAt = (*source).StartingAt
 		metronomeAddRateRequest.CommitRate = c.pV1alpha1CommitRateToPMetronomeCommitRate((*source).CommitRate)
 		metronomeAddRateRequest.CreditTypeID = (*source).CreditTypeID
 		metronomeAddRateRequest.EndingBefore = (*source).EndingBefore
+		metronomeAddRateRequest.Entitled = (*source).Entitled
 		metronomeAddRateRequest.IsProrated = (*source).IsProrated
 		metronomeAddRateRequest.Price = (*source).Price
 		if (*source).PricingGroupValues != nil {
@@ -64,7 +60,11 @@ func (c *RateConverterImpl) FromRateSpec(source *v1alpha1.RateParameters) *metro
 				metronomeAddRateRequest.PricingGroupValues[key] = value
 			}
 		}
+		metronomeAddRateRequest.ProductID = (*source).ProductID
 		metronomeAddRateRequest.Quantity = (*source).Quantity
+		metronomeAddRateRequest.RateCardID = (*source).RateCardID
+		metronomeAddRateRequest.RateType = (*source).RateType
+		metronomeAddRateRequest.StartingAt = (*source).StartingAt
 		if (*source).Tiers != nil {
 			metronomeAddRateRequest.Tiers = make([]metronome.Tier, len((*source).Tiers))
 			for i := 0; i < len((*source).Tiers); i++ {
@@ -111,11 +111,20 @@ func (c *RateConverterImpl) ToRate(source *v1alpha1.ObservedRate) *metronome.Rat
 	var pMetronomeRate *metronome.Rate
 	if source != nil {
 		var metronomeRate metronome.Rate
+		metronomeRate.CommitRate = c.v1alpha1CommitRateToPMetronomeCommitRate((*source).CommitRate)
+		metronomeRate.Details = c.v1alpha1RateDetailsToMetronomeRateDetails((*source).Details)
+		metronomeRate.EndingBefore = (*source).EndingBefore
 		metronomeRate.Entitled = (*source).Entitled
+		if (*source).PricingGroupValues != nil {
+			metronomeRate.PricingGroupValues = make(map[string]string, len((*source).PricingGroupValues))
+			for key, value := range (*source).PricingGroupValues {
+				metronomeRate.PricingGroupValues[key] = value
+			}
+		}
 		if (*source).ProductCustomField != nil {
 			metronomeRate.ProductCustomField = make(map[string]string, len((*source).ProductCustomField))
-			for key, value := range (*source).ProductCustomField {
-				metronomeRate.ProductCustomField[key] = value
+			for key2, value2 := range (*source).ProductCustomField {
+				metronomeRate.ProductCustomField[key2] = value2
 			}
 		}
 		metronomeRate.ProductID = (*source).ProductID
@@ -126,16 +135,7 @@ func (c *RateConverterImpl) ToRate(source *v1alpha1.ObservedRate) *metronome.Rat
 				metronomeRate.ProductTags[i] = (*source).ProductTags[i]
 			}
 		}
-		metronomeRate.Details = c.v1alpha1RateDetailsToMetronomeRateDetails((*source).Details)
 		metronomeRate.StartingAt = (*source).StartingAt
-		metronomeRate.CommitRate = c.v1alpha1CommitRateToPMetronomeCommitRate((*source).CommitRate)
-		metronomeRate.EndingBefore = (*source).EndingBefore
-		if (*source).PricingGroupValues != nil {
-			metronomeRate.PricingGroupValues = make(map[string]string, len((*source).PricingGroupValues))
-			for key2, value2 := range (*source).PricingGroupValues {
-				metronomeRate.PricingGroupValues[key2] = value2
-			}
-		}
 		pMetronomeRate = &metronomeRate
 	}
 	return pMetronomeRate
@@ -274,7 +274,6 @@ func (c *RateConverterImpl) v1alpha1CreditTypeToMetronomeCreditType(source v1alp
 }
 func (c *RateConverterImpl) v1alpha1RateDetailsToMetronomeRateDetails(source v1alpha1.RateDetails) metronome.RateDetails {
 	var metronomeRateDetails metronome.RateDetails
-	metronomeRateDetails.RateType = source.RateType
 	metronomeRateDetails.CreditType = c.v1alpha1CreditTypeToMetronomeCreditType(source.CreditType)
 	metronomeRateDetails.IsProrated = source.IsProrated
 	metronomeRateDetails.Price = source.Price
@@ -285,6 +284,7 @@ func (c *RateConverterImpl) v1alpha1RateDetailsToMetronomeRateDetails(source v1a
 		}
 	}
 	metronomeRateDetails.Quantity = source.Quantity
+	metronomeRateDetails.RateType = source.RateType
 	if source.Tiers != nil {
 		metronomeRateDetails.Tiers = make([]metronome.Tier, len(source.Tiers))
 		for i := 0; i < len(source.Tiers); i++ {
