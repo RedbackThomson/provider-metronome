@@ -30,6 +30,17 @@ var (
 	ErrCustomerInvalidName = errors.New("invalid contract name")
 )
 
+type ContractClient interface {
+	GetContract(ctx context.Context, reqData GetContractRequest) (*GetContractResponse, error)
+	ListContracts(ctx context.Context, reqData ListContractsRequest) (*ListContractsResponse, error)
+}
+
+type ContractClientImpl struct {
+	Client *Client
+}
+
+var _ (ContractClient) = (*ContractClientImpl)(nil)
+
 type GetContractRequest struct {
 	CustomerID string `json:"customer_id"`
 	ContractID string `json:"contract_id"`
@@ -84,8 +95,8 @@ type ListContractsResponse struct {
 	Data []Contract `json:"data"`
 }
 
-func (c *Client) GetContract(ctx context.Context, reqData GetContractRequest) (*GetContractResponse, error) {
-	url := fmt.Sprintf("%s/v2/contracts/get", c.baseURL)
+func (c *ContractClientImpl) GetContract(ctx context.Context, reqData GetContractRequest) (*GetContractResponse, error) {
+	url := fmt.Sprintf("%s/v2/contracts/get", c.Client.baseURL)
 
 	if !IsUUID(reqData.ContractID) {
 		return nil, ErrContractInvalidName
@@ -99,12 +110,12 @@ func (c *Client) GetContract(ctx context.Context, reqData GetContractRequest) (*
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -125,19 +136,19 @@ func (c *Client) GetContract(ctx context.Context, reqData GetContractRequest) (*
 	return &response, nil
 }
 
-func (c *Client) ListContracts(ctx context.Context, reqData ListContractsRequest) (*ListContractsResponse, error) {
-	url := fmt.Sprintf("%s/v2/contracts/list", c.baseURL)
+func (c *ContractClientImpl) ListContracts(ctx context.Context, reqData ListContractsRequest) (*ListContractsResponse, error) {
+	url := fmt.Sprintf("%s/v2/contracts/list", c.Client.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

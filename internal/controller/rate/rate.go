@@ -24,9 +24,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
@@ -40,18 +38,16 @@ import (
 	"github.com/redbackthomson/provider-metronome/apis/rate/v1alpha1"
 	metronomev1alpha1 "github.com/redbackthomson/provider-metronome/apis/v1alpha1"
 	metronomeClient "github.com/redbackthomson/provider-metronome/internal/clients/metronome"
+	"github.com/redbackthomson/provider-metronome/internal/connector"
 	"github.com/redbackthomson/provider-metronome/internal/converters"
 )
 
 const (
-	errNotRate              = "managed resource is not a Rate custom resource"
-	errProviderConfigNotSet = "provider config is not set"
-	errGetProviderConfig    = "cannot get provider config"
-	errGetCreds             = "failed to create credentials from provider config"
-	errFailedToTrackUsage   = "cannot track provider config usage"
-	errGetRate              = "failed to get rate"
-	errCreateRate           = "failed to create rate"
-	errArchiveRate          = "failed to archive rate"
+	errNotRate            = "managed resource is not a Rate custom resource"
+	errFailedToTrackUsage = "cannot track provider config usage"
+	errGetRate            = "failed to get rate"
+	errCreateRate         = "failed to create rate"
+	errArchiveRate        = "failed to archive rate"
 )
 
 // Setup adds a controller that reconciles Rate managed resources.
@@ -59,13 +55,20 @@ func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 	name := managed.ControllerName(v1alpha1.RateGroupKind)
 
 	reconcilerOptions := []managed.ReconcilerOption{
-		managed.WithExternalConnecter(&connector{
-			client:               mgr.GetClient(),
-			logger:               o.Logger,
-			usage:                resource.NewProviderConfigUsageTracker(mgr.GetClient(), &metronomev1alpha1.ProviderConfigUsage{}),
-			newMetronomeClientFn: metronomeClient.New,
-			baseURL:              baseUrl,
-		}),
+		managed.WithExternalConnecter(
+			&connector.Connector[*v1alpha1.Rate, *metronomeExternal]{
+				Logger:               o.Logger,
+				Client:               mgr.GetClient(),
+				Usage:                resource.NewProviderConfigUsageTracker(mgr.GetClient(), &metronomev1alpha1.ProviderConfigUsage{}),
+				BaseURL:              baseUrl,
+				NewMetronomeClientFn: metronomeClient.New,
+				NewExternalClientFn: func(log logging.Logger, client *metronomeClient.Client) *metronomeExternal {
+					return &metronomeExternal{
+						logger:    o.Logger,
+						metronome: client.Rate(),
+					}
+				},
+			}),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -93,56 +96,9 @@ func Setup(mgr ctrl.Manager, o controller.Options, baseUrl string) error {
 		Complete(r)
 }
 
-type connector struct {
-	baseURL string
-	logger  logging.Logger
-	client  client.Client
-	usage   resource.Tracker
-
-	newMetronomeClientFn func(log logging.Logger, baseURL, authToken string) *metronomeClient.Client
-}
-
-func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) { //nolint:gocyclo
-	cr, ok := mg.(*v1alpha1.Rate)
-	if !ok {
-		return nil, errors.New(errNotRate)
-	}
-	l := c.logger.WithValues("request", cr.Name)
-
-	l.Debug("Connecting")
-
-	pc := &metronomev1alpha1.ProviderConfig{}
-
-	if cr.GetProviderConfigReference() == nil {
-		return nil, errors.New(errProviderConfigNotSet)
-	}
-
-	if err := c.usage.Track(ctx, cr); err != nil {
-		return nil, errors.Wrap(err, errFailedToTrackUsage)
-	}
-
-	n := types.NamespacedName{Name: cr.GetProviderConfigReference().Name}
-	if err := c.client.Get(ctx, n, pc); err != nil {
-		return nil, errors.Wrap(err, errGetProviderConfig)
-	}
-
-	cd := pc.Spec.Credentials
-	kc, err := resource.CommonCredentialExtractor(ctx, cd.Source, c.client, cd.CommonCredentialSelectors)
-	if err != nil {
-		return nil, errors.Wrap(err, errGetCreds)
-	}
-
-	m := c.newMetronomeClientFn(c.logger, c.baseURL, string(kc))
-
-	return &metronomeExternal{
-		logger:    l,
-		metronome: m,
-	}, nil
-}
-
 type metronomeExternal struct {
 	logger    logging.Logger
-	metronome *metronomeClient.Client
+	metronome metronomeClient.RateClient
 }
 
 func (e *metronomeExternal) Disconnect(ctx context.Context) error {

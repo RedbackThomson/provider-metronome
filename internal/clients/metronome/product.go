@@ -34,6 +34,20 @@ const (
 	errProductAlreadyArchived = "Product already archived"
 )
 
+type ProductClient interface {
+	ArchiveProduct(ctx context.Context, reqData ArchiveProductRequest) (*ArchiveProductResponse, error)
+	CreateProduct(ctx context.Context, reqData CreateProductRequest) (*CreateProductResponse, error)
+	GetProduct(ctx context.Context, reqData GetProductRequest) (*GetProductResponse, error)
+	ListProduct(ctx context.Context, reqData ListProductsRequest) (*ListProductsResponse, error)
+	UpdateProduct(ctx context.Context, reqData UpdateProductRequest) (*UpdateProductResponse, error)
+}
+
+type ProductClientImpl struct {
+	Client *Client
+}
+
+var _ (ProductClient) = (*ProductClientImpl)(nil)
+
 type ArchiveProductRequest struct {
 	ProductID string `json:"product_id"`
 }
@@ -127,8 +141,8 @@ type ListProductsResponse struct {
 	NextPage *string   `json:"next_page"`
 }
 
-func (c *Client) ArchiveProduct(ctx context.Context, reqData ArchiveProductRequest) (*ArchiveProductResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/products/archive", c.baseURL)
+func (c *ProductClientImpl) ArchiveProduct(ctx context.Context, reqData ArchiveProductRequest) (*ArchiveProductResponse, error) {
+	url := fmt.Sprintf("%s/v1/contract-pricing/products/archive", c.Client.baseURL)
 
 	if !IsUUID(reqData.ProductID) {
 		return nil, ErrProductInvalidName
@@ -139,12 +153,12 @@ func (c *Client) ArchiveProduct(ctx context.Context, reqData ArchiveProductReque
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -168,19 +182,19 @@ func (c *Client) ArchiveProduct(ctx context.Context, reqData ArchiveProductReque
 	return &response, nil
 }
 
-func (c *Client) CreateProduct(ctx context.Context, reqData CreateProductRequest) (*CreateProductResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/products/create", c.baseURL)
+func (c *ProductClientImpl) CreateProduct(ctx context.Context, reqData CreateProductRequest) (*CreateProductResponse, error) {
+	url := fmt.Sprintf("%s/v1/contract-pricing/products/create", c.Client.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +215,8 @@ func (c *Client) CreateProduct(ctx context.Context, reqData CreateProductRequest
 	return &response, nil
 }
 
-func (c *Client) GetProduct(ctx context.Context, reqData GetProductRequest) (*GetProductResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/products/get", c.baseURL)
+func (c *ProductClientImpl) GetProduct(ctx context.Context, reqData GetProductRequest) (*GetProductResponse, error) {
+	url := fmt.Sprintf("%s/v1/contract-pricing/products/get", c.Client.baseURL)
 
 	if !IsUUID(reqData.ID) {
 		return nil, ErrProductInvalidName
@@ -213,12 +227,12 @@ func (c *Client) GetProduct(ctx context.Context, reqData GetProductRequest) (*Ge
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -239,19 +253,19 @@ func (c *Client) GetProduct(ctx context.Context, reqData GetProductRequest) (*Ge
 	return &response, nil
 }
 
-func (c *Client) ListProduct(ctx context.Context, reqData ListProductsRequest) (*ListProductsResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/products/list", c.baseURL)
+func (c *ProductClientImpl) ListProduct(ctx context.Context, reqData ListProductsRequest) (*ListProductsResponse, error) {
+	url := fmt.Sprintf("%s/v1/contract-pricing/products/list", c.Client.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -272,8 +286,8 @@ func (c *Client) ListProduct(ctx context.Context, reqData ListProductsRequest) (
 	return &response, nil
 }
 
-func (c *Client) UpdateProduct(ctx context.Context, reqData UpdateProductRequest) (*UpdateProductResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/products/update", c.baseURL)
+func (c *ProductClientImpl) UpdateProduct(ctx context.Context, reqData UpdateProductRequest) (*UpdateProductResponse, error) {
+	url := fmt.Sprintf("%s/v1/contract-pricing/products/update", c.Client.baseURL)
 
 	if !IsUUID(reqData.ProductID) {
 		return nil, ErrProductInvalidName
@@ -284,12 +298,12 @@ func (c *Client) UpdateProduct(ctx context.Context, reqData UpdateProductRequest
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

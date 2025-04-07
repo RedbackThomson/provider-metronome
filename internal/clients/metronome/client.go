@@ -32,6 +32,34 @@ type Client struct {
 	httpClient *http.Client
 }
 
+func (c *Client) BillableMetric() BillableMetricClient {
+	return &BillableMetricClientImpl{Client: c}
+}
+
+func (c *Client) Contract() ContractClient {
+	return &ContractClientImpl{Client: c}
+}
+
+func (c *Client) Customer() CustomerClient {
+	return &CustomerClientImpl{Client: c}
+}
+
+func (c *Client) CustomFieldKey() CustomFieldKeyClient {
+	return &CustomFieldKeyClientImpl{Client: c}
+}
+
+func (c *Client) Product() ProductClient {
+	return &ProductClientImpl{Client: c}
+}
+
+func (c *Client) Rate() RateClient {
+	return &RateClientImpl{Client: c}
+}
+
+func (c *Client) RateCard() RateCardClient {
+	return &RateCardClientImpl{Client: c}
+}
+
 func (c *Client) newAuthenticatedRequest(ctx context.Context, method, url string, body []byte) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(body))
 	if err != nil {

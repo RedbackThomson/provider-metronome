@@ -25,6 +25,19 @@ import (
 	"github.com/pkg/errors"
 )
 
+type CustomerClient interface {
+	CreateCustomer(ctx context.Context, reqData CreateCustomerRequest) (*CreateCustomerResponse, error)
+	GetCustomer(ctx context.Context, customerID string) (*GetCustomerResponse, error)
+	UpdateCustomerAliases(ctx context.Context, customerID string, reqData UpdateAliasesRequest) error
+	ListCustomers(ctx context.Context) (*ListCustomersResponse, error)
+}
+
+type CustomerClientImpl struct {
+	Client *Client
+}
+
+var _ (CustomerClient) = (*CustomerClientImpl)(nil)
+
 type CreateCustomerRequest struct {
 	IngestAliases                 []string                       `json:"ingest_aliases"`
 	Name                          string                         `json:"name"`
@@ -79,19 +92,19 @@ type UpdateAliasesRequest struct {
 	IngestAliases []string `json:"ingest_aliases"`
 }
 
-func (c *Client) CreateCustomer(ctx context.Context, reqData CreateCustomerRequest) (*CreateCustomerResponse, error) {
-	url := fmt.Sprintf("%s/v1/customers", c.baseURL)
+func (c *CustomerClientImpl) CreateCustomer(ctx context.Context, reqData CreateCustomerRequest) (*CreateCustomerResponse, error) {
+	url := fmt.Sprintf("%s/v1/customers", c.Client.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -112,15 +125,15 @@ func (c *Client) CreateCustomer(ctx context.Context, reqData CreateCustomerReque
 	return &response, nil
 }
 
-func (c *Client) GetCustomer(ctx context.Context, customerID string) (*GetCustomerResponse, error) {
-	url := fmt.Sprintf("%s/v1/customers/%s", c.baseURL, customerID)
+func (c *CustomerClientImpl) GetCustomer(ctx context.Context, customerID string) (*GetCustomerResponse, error) {
+	url := fmt.Sprintf("%s/v1/customers/%s", c.Client.baseURL, customerID)
 
-	req, err := c.newAuthenticatedRequest(ctx, "GET", url, nil)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -141,19 +154,19 @@ func (c *Client) GetCustomer(ctx context.Context, customerID string) (*GetCustom
 	return &response, nil
 }
 
-func (c *Client) UpdateCustomerAliases(ctx context.Context, customerID string, reqData UpdateAliasesRequest) error {
-	url := fmt.Sprintf("%s/v1/customers/%s/setIngestAliases", c.baseURL, customerID)
+func (c *CustomerClientImpl) UpdateCustomerAliases(ctx context.Context, customerID string, reqData UpdateAliasesRequest) error {
+	url := fmt.Sprintf("%s/v1/customers/%s/setIngestAliases", c.Client.baseURL, customerID)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -169,14 +182,14 @@ func (c *Client) UpdateCustomerAliases(ctx context.Context, customerID string, r
 	return nil
 }
 
-func (c *Client) ListCustomers(ctx context.Context) (*ListCustomersResponse, error) {
-	url := fmt.Sprintf("%s/v1/customers", c.baseURL)
-	req, err := c.newAuthenticatedRequest(ctx, "GET", url, nil)
+func (c *CustomerClientImpl) ListCustomers(ctx context.Context) (*ListCustomersResponse, error) {
+	url := fmt.Sprintf("%s/v1/customers", c.Client.baseURL)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

@@ -28,6 +28,18 @@ var (
 	ErrCustomFieldKeyInvalidName = errors.New("invalid custom field key name")
 )
 
+type CustomFieldKeyClient interface {
+	CreateCustomFieldKey(ctx context.Context, reqData CreateCustomFieldKeyRequest) error
+	ListCustomFieldKeys(ctx context.Context, reqData ListCustomFieldKeysRequest, nextPage string) (*ListCustomFieldKeysResponse, error)
+	DeleteCustomFieldKey(ctx context.Context, reqData DeleteCustomFieldKeyRequest) error
+}
+
+type CustomFieldKeyClientImpl struct {
+	Client *Client
+}
+
+var _ (CustomFieldKeyClient) = (*CustomFieldKeyClientImpl)(nil)
+
 type CustomFieldKey struct {
 	EnforceUniqueness bool   `json:"enforce_uniqueness"`
 	Entity            string `json:"entity"`
@@ -55,20 +67,20 @@ type DeleteCustomFieldKeyRequest struct {
 }
 
 // CreateCustomFieldKey creates a new custom field key.
-func (c *Client) CreateCustomFieldKey(ctx context.Context, reqData CreateCustomFieldKeyRequest) error {
-	url := fmt.Sprintf("%s/v1/customFields/addKey", c.baseURL)
+func (c *CustomFieldKeyClientImpl) CreateCustomFieldKey(ctx context.Context, reqData CreateCustomFieldKeyRequest) error {
+	url := fmt.Sprintf("%s/v1/customFields/addKey", c.Client.baseURL)
 
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}
@@ -85,15 +97,15 @@ func (c *Client) CreateCustomFieldKey(ctx context.Context, reqData CreateCustomF
 }
 
 // ListCustomFieldKeys retrieves a list of all custom field keys.
-func (c *Client) ListCustomFieldKeys(ctx context.Context, reqData ListCustomFieldKeysRequest, nextPage string) (*ListCustomFieldKeysResponse, error) {
-	url := fmt.Sprintf("%s/v1/customFields/listKeys", c.baseURL)
+func (c *CustomFieldKeyClientImpl) ListCustomFieldKeys(ctx context.Context, reqData ListCustomFieldKeysRequest, nextPage string) (*ListCustomFieldKeysResponse, error) {
+	url := fmt.Sprintf("%s/v1/customFields/listKeys", c.Client.baseURL)
 
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -104,7 +116,7 @@ func (c *Client) ListCustomFieldKeys(ctx context.Context, reqData ListCustomFiel
 	}
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -126,8 +138,8 @@ func (c *Client) ListCustomFieldKeys(ctx context.Context, reqData ListCustomFiel
 }
 
 // DeleteCustomFieldKey deletes a custom field key by ID.
-func (c *Client) DeleteCustomFieldKey(ctx context.Context, reqData DeleteCustomFieldKeyRequest) error {
-	url := fmt.Sprintf("%s/v1/customFields/removeKey", c.baseURL)
+func (c *CustomFieldKeyClientImpl) DeleteCustomFieldKey(ctx context.Context, reqData DeleteCustomFieldKeyRequest) error {
+	url := fmt.Sprintf("%s/v1/customFields/removeKey", c.Client.baseURL)
 
 	// Prepare the request payload
 	jsonData, err := json.Marshal(reqData)
@@ -136,13 +148,13 @@ func (c *Client) DeleteCustomFieldKey(ctx context.Context, reqData DeleteCustomF
 	}
 
 	// Create a new authenticated request
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Execute the HTTP request
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}

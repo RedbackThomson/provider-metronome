@@ -35,6 +35,20 @@ const (
 	errBillableMetricAlreadyArchived = "Billable metric already archived"
 )
 
+type BillableMetricClient interface {
+	CreateBillableMetric(ctx context.Context, reqData CreateBillableMetricRequest) (*CreateBillableMetricResponse, error)
+	GetBillableMetric(ctx context.Context, id string) (*BillableMetric, error)
+	ListBillableMetrics(ctx context.Context) (*ListBillableMetricsResponse, error)
+	UpdateBillableMetric(ctx context.Context, id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error)
+	ArchiveBillableMetric(ctx context.Context, id string) (*ArchiveBillableMetricResponse, error)
+}
+
+type BillableMetricClientImpl struct {
+	Client *Client
+}
+
+var _ (BillableMetricClient) = (*BillableMetricClientImpl)(nil)
+
 // EventTypeFilter defines the filter based on event types.
 type EventTypeFilter struct {
 	InValues    []string `json:"in_values,omitempty"`
@@ -111,20 +125,20 @@ type ArchiveBillableMetricRequest struct {
 type ArchiveBillableMetricResponse DataID
 
 // CreateBillableMetric creates a new billable metric.
-func (c *Client) CreateBillableMetric(ctx context.Context, reqData CreateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
-	url := fmt.Sprintf("%s/v1/billable-metrics/create", c.baseURL)
+func (c *BillableMetricClientImpl) CreateBillableMetric(ctx context.Context, reqData CreateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
+	url := fmt.Sprintf("%s/v1/billable-metrics/create", c.Client.baseURL)
 
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -146,19 +160,19 @@ func (c *Client) CreateBillableMetric(ctx context.Context, reqData CreateBillabl
 }
 
 // GetBillableMetric retrieves a billable metric by ID.
-func (c *Client) GetBillableMetric(ctx context.Context, id string) (*BillableMetric, error) {
-	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
+func (c *BillableMetricClientImpl) GetBillableMetric(ctx context.Context, id string) (*BillableMetric, error) {
+	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.Client.baseURL, id)
 
 	if !IsUUID(id) {
 		return nil, ErrBillableMetricInvalidName
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "GET", url, nil)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -182,15 +196,15 @@ func (c *Client) GetBillableMetric(ctx context.Context, id string) (*BillableMet
 }
 
 // ListBillableMetrics retrieves a list of all billable metrics.
-func (c *Client) ListBillableMetrics(ctx context.Context) (*ListBillableMetricsResponse, error) {
-	url := fmt.Sprintf("%s/v1/billable-metrics", c.baseURL)
+func (c *BillableMetricClientImpl) ListBillableMetrics(ctx context.Context) (*ListBillableMetricsResponse, error) {
+	url := fmt.Sprintf("%s/v1/billable-metrics", c.Client.baseURL)
 
-	req, err := c.newAuthenticatedRequest(ctx, "GET", url, nil)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -212,8 +226,8 @@ func (c *Client) ListBillableMetrics(ctx context.Context) (*ListBillableMetricsR
 }
 
 // UpdateBillableMetric updates a billable metric by ID.
-func (c *Client) UpdateBillableMetric(ctx context.Context, id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
-	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.baseURL, id)
+func (c *BillableMetricClientImpl) UpdateBillableMetric(ctx context.Context, id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
+	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.Client.baseURL, id)
 
 	if !IsUUID(id) {
 		return nil, ErrBillableMetricInvalidName
@@ -224,12 +238,12 @@ func (c *Client) UpdateBillableMetric(ctx context.Context, id string, reqData Up
 		return nil, fmt.Errorf("failed to marshal request data: %w", err)
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "PUT", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "PUT", url, jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -251,8 +265,8 @@ func (c *Client) UpdateBillableMetric(ctx context.Context, id string, reqData Up
 }
 
 // ArchiveBillableMetric archives a billable metric by ID.
-func (c *Client) ArchiveBillableMetric(ctx context.Context, id string) (*ArchiveBillableMetricResponse, error) {
-	url := fmt.Sprintf("%s/v1/billable-metrics/archive", c.baseURL)
+func (c *BillableMetricClientImpl) ArchiveBillableMetric(ctx context.Context, id string) (*ArchiveBillableMetricResponse, error) {
+	url := fmt.Sprintf("%s/v1/billable-metrics/archive", c.Client.baseURL)
 
 	if !IsUUID(id) {
 		return nil, ErrBillableMetricInvalidName
@@ -266,13 +280,13 @@ func (c *Client) ArchiveBillableMetric(ctx context.Context, id string) (*Archive
 	}
 
 	// Create a new authenticated request
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Execute the HTTP request
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}

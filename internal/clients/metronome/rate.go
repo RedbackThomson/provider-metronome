@@ -29,6 +29,17 @@ var (
 	ErrRateInvalidName = errors.New("invalid rate name")
 )
 
+type RateClient interface {
+	GetRates(ctx context.Context, reqData GetRatesRequest, nextPage string) (*GetRatesResponse, error)
+	AddRate(ctx context.Context, reqData AddRateRequest) (*AddRateResponse, error)
+}
+
+type RateClientImpl struct {
+	Client *Client
+}
+
+var _ (RateClient) = (*RateClientImpl)(nil)
+
 type GetRatesRequest struct {
 	RateCardID string         `json:"rate_card_id"`
 	At         string         `json:"at"`
@@ -122,8 +133,8 @@ type AddRatesResponse struct {
 	} `json:"data"`
 }
 
-func (c *Client) GetRates(ctx context.Context, reqData GetRatesRequest, nextPage string) (*GetRatesResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/getRates", c.baseURL)
+func (c *RateClientImpl) GetRates(ctx context.Context, reqData GetRatesRequest, nextPage string) (*GetRatesResponse, error) {
+	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/getRates", c.Client.baseURL)
 
 	if !IsUUID(reqData.RateCardID) {
 		return nil, ErrRateCardInvalidName
@@ -134,7 +145,7 @@ func (c *Client) GetRates(ctx context.Context, reqData GetRatesRequest, nextPage
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +156,7 @@ func (c *Client) GetRates(ctx context.Context, reqData GetRatesRequest, nextPage
 	}
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -166,8 +177,8 @@ func (c *Client) GetRates(ctx context.Context, reqData GetRatesRequest, nextPage
 	return &response, nil
 }
 
-func (c *Client) AddRate(ctx context.Context, reqData AddRateRequest) (*AddRateResponse, error) {
-	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/addRate", c.baseURL)
+func (c *RateClientImpl) AddRate(ctx context.Context, reqData AddRateRequest) (*AddRateResponse, error) {
+	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/addRate", c.Client.baseURL)
 
 	if !IsUUID(reqData.RateCardID) {
 		return nil, ErrRateInvalidName
@@ -181,12 +192,12 @@ func (c *Client) AddRate(ctx context.Context, reqData AddRateRequest) (*AddRateR
 		return nil, err
 	}
 
-	req, err := c.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
