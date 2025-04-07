@@ -38,7 +38,7 @@ type ProductClient interface {
 	ArchiveProduct(ctx context.Context, reqData ArchiveProductRequest) (*ArchiveProductResponse, error)
 	CreateProduct(ctx context.Context, reqData CreateProductRequest) (*CreateProductResponse, error)
 	GetProduct(ctx context.Context, reqData GetProductRequest) (*GetProductResponse, error)
-	ListProduct(ctx context.Context, reqData ListProductsRequest) (*ListProductsResponse, error)
+	ListProduct(ctx context.Context, reqData ListProductsRequest, nextPage string) (*ListProductsResponse, error)
 	UpdateProduct(ctx context.Context, reqData UpdateProductRequest) (*UpdateProductResponse, error)
 }
 
@@ -138,7 +138,7 @@ type ProductDetails struct {
 
 type ListProductsResponse struct {
 	Data     []Product `json:"data"`
-	NextPage *string   `json:"next_page"`
+	NextPage string    `json:"next_page"`
 }
 
 func (c *ProductClientImpl) ArchiveProduct(ctx context.Context, reqData ArchiveProductRequest) (*ArchiveProductResponse, error) {
@@ -253,7 +253,7 @@ func (c *ProductClientImpl) GetProduct(ctx context.Context, reqData GetProductRe
 	return &response, nil
 }
 
-func (c *ProductClientImpl) ListProduct(ctx context.Context, reqData ListProductsRequest) (*ListProductsResponse, error) {
+func (c *ProductClientImpl) ListProduct(ctx context.Context, reqData ListProductsRequest, nextPage string) (*ListProductsResponse, error) {
 	url := fmt.Sprintf("%s/v1/contract-pricing/products/list", c.Client.baseURL)
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {
@@ -264,6 +264,12 @@ func (c *ProductClientImpl) ListProduct(ctx context.Context, reqData ListProduct
 	if err != nil {
 		return nil, err
 	}
+
+	q := req.URL.Query()
+	if nextPage != "" {
+		q.Add("next_page", nextPage)
+	}
+	req.URL.RawQuery = q.Encode()
 
 	resp, err := c.Client.httpClient.Do(req)
 	if err != nil {

@@ -17,7 +17,9 @@ limitations under the License.
 package metronome
 
 type DataID struct {
-	Data struct {
-		ID string `json:"id"`
-	} `json:"data"`
+	Data IDOnly `json:"data"`
+}
+
+type IDOnly struct {
+	ID string `json:"id"`
 }
