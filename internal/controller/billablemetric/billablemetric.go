@@ -43,10 +43,10 @@ import (
 )
 
 const (
-	errNotBillableMetric         = "managed resource is not a BillableMetric custom resource"
-	errFailedToGetBillableMetric = "failed to get billable metric"
-	errCreateBillableMetric      = "failed to create billable metric"
-	errArchiveBillableMetric     = "failed to archive billable metric"
+	errNotBillableMetric     = "managed resource is not a BillableMetric custom resource"
+	errGetBillableMetric     = "failed to get billable metric"
+	errCreateBillableMetric  = "failed to create billable metric"
+	errArchiveBillableMetric = "failed to archive billable metric"
 )
 
 // Setup adds a controller that reconciles BillableMetric managed resources.
@@ -117,18 +117,20 @@ func (e *metronomeExternal) Observe(ctx context.Context, mg resource.Managed) (m
 		return managed.ExternalObservation{}, nil
 	}
 
-	metric, err := e.metronome.GetBillableMetric(ctx, id)
+	res, err := e.metronome.GetBillableMetric(ctx, id)
 	if err != nil {
 		// the external name isn't valid
 		if errors.Is(err, metronomeClient.ErrBillableMetricInvalidName) {
 			return managed.ExternalObservation{ResourceExists: false}, nil
 		}
-		return managed.ExternalObservation{}, errors.Wrap(err, errFailedToGetBillableMetric)
+		return managed.ExternalObservation{}, errors.Wrap(err, errGetBillableMetric)
 	}
 
-	if metric == nil {
+	if res == nil {
 		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
+
+	metric := &res.Data
 
 	if metric.ArchivedAt != "" {
 		return managed.ExternalObservation{ResourceExists: false}, nil

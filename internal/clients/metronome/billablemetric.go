@@ -37,9 +37,9 @@ const (
 
 type BillableMetricClient interface {
 	CreateBillableMetric(ctx context.Context, reqData CreateBillableMetricRequest) (*CreateBillableMetricResponse, error)
-	GetBillableMetric(ctx context.Context, id string) (*BillableMetric, error)
+	GetBillableMetric(ctx context.Context, id string) (*GetBillableMetricResponse, error)
 	ListBillableMetrics(ctx context.Context) (*ListBillableMetricsResponse, error)
-	UpdateBillableMetric(ctx context.Context, id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error)
+	UpdateBillableMetric(ctx context.Context, id string, reqData UpdateBillableMetricRequest) (*UpdateBillableMetricResponse, error)
 	ArchiveBillableMetric(ctx context.Context, id string) (*ArchiveBillableMetricResponse, error)
 }
 
@@ -105,6 +105,16 @@ type CreateBillableMetricResponse struct {
 	Data BillableMetric `json:"data"`
 }
 
+// UpdateBillableMetricResponse represents the response for updating a billable metric.
+type UpdateBillableMetricResponse struct {
+	Data BillableMetric `json:"data"`
+}
+
+// GetBillableMetricResponse represents the response for getting a billable metric.
+type GetBillableMetricResponse struct {
+	Data BillableMetric `json:"data"`
+}
+
 // ListBillableMetricsResponse represents the response for listing billable metrics.
 type ListBillableMetricsResponse struct {
 	Data     []BillableMetric `json:"data"`
@@ -160,7 +170,7 @@ func (c *BillableMetricClientImpl) CreateBillableMetric(ctx context.Context, req
 }
 
 // GetBillableMetric retrieves a billable metric by ID.
-func (c *BillableMetricClientImpl) GetBillableMetric(ctx context.Context, id string) (*BillableMetric, error) {
+func (c *BillableMetricClientImpl) GetBillableMetric(ctx context.Context, id string) (*GetBillableMetricResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.Client.baseURL, id)
 
 	if !IsUUID(id) {
@@ -185,14 +195,12 @@ func (c *BillableMetricClientImpl) GetBillableMetric(ctx context.Context, id str
 		return nil, fmt.Errorf("failed to get billable metric: %s", resp.Status)
 	}
 
-	var response struct {
-		Data BillableMetric `json:"data"`
-	}
+	var response GetBillableMetricResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return &response.Data, nil
+	return &response, nil
 }
 
 // ListBillableMetrics retrieves a list of all billable metrics.
@@ -226,7 +234,7 @@ func (c *BillableMetricClientImpl) ListBillableMetrics(ctx context.Context) (*Li
 }
 
 // UpdateBillableMetric updates a billable metric by ID.
-func (c *BillableMetricClientImpl) UpdateBillableMetric(ctx context.Context, id string, reqData UpdateBillableMetricRequest) (*CreateBillableMetricResponse, error) {
+func (c *BillableMetricClientImpl) UpdateBillableMetric(ctx context.Context, id string, reqData UpdateBillableMetricRequest) (*UpdateBillableMetricResponse, error) {
 	url := fmt.Sprintf("%s/v1/billable-metrics/%s", c.Client.baseURL, id)
 
 	if !IsUUID(id) {
@@ -256,7 +264,7 @@ func (c *BillableMetricClientImpl) UpdateBillableMetric(ctx context.Context, id 
 		return nil, fmt.Errorf("failed to update billable metric: %s", resp.Status)
 	}
 
-	var response CreateBillableMetricResponse
+	var response UpdateBillableMetricResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}

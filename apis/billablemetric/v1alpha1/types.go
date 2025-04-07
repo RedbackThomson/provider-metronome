@@ -39,11 +39,11 @@ type PropertyFilter struct {
 type AggregationType string
 
 const (
-	AggregationCount  = "count"
-	AggregationLatest = "latest"
-	AggregationMax    = "max"
-	AggregationSum    = "sum"
-	AggregationUnique = "unique"
+	AggregationTypeCount  = "count"
+	AggregationTypeLatest = "latest"
+	AggregationTypeMax    = "max"
+	AggregationTypeSum    = "sum"
+	AggregationTypeUnique = "unique"
 )
 
 // BillableMetricParameters represents the request payload for creating a billable metric.
