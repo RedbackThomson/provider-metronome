@@ -69,18 +69,18 @@ type AddRatesRequest struct {
 }
 
 type AddRateRequest struct {
-	Entitled           bool              `json:"entitled"`
-	ProductID          string            `json:"product_id"`
-	RateCardID         string            `json:"rate_card_id"`
-	RateType           string            `json:"rate_type"`
-	StartingAt         string            `json:"starting_at"`
 	CommitRate         *CommitRate       `json:"commit_rate,omitempty"`
 	CreditTypeID       string            `json:"credit_type_id,omitempty"`
 	EndingBefore       string            `json:"ending_before,omitempty"`
+	Entitled           bool              `json:"entitled"`
 	IsProrated         bool              `json:"is_prorated,omitempty"`
 	Price              float64           `json:"price,omitempty"`
 	PricingGroupValues map[string]string `json:"pricing_group_values,omitempty"`
+	ProductID          string            `json:"product_id"`
 	Quantity           float64           `json:"quantity,omitempty"`
+	RateCardID         string            `json:"rate_card_id"`
+	RateType           string            `json:"rate_type"`
+	StartingAt         string            `json:"starting_at"`
 	Tiers              []Tier            `json:"tiers,omitempty"`
 	UseListPrices      bool              `json:"use_list_prices,omitempty"`
 }
@@ -104,25 +104,25 @@ type CommitRate struct {
 }
 
 type Rate struct {
+	CommitRate         *CommitRate       `json:"commit_rate,omitempty"`
+	Details            RateDetails       `json:"rate"`
+	EndingBefore       string            `json:"ending_before,omitempty"`
 	Entitled           bool              `json:"entitled"`
+	PricingGroupValues map[string]string `json:"pricing_group_values,omitempty"`
 	ProductCustomField map[string]string `json:"product_custom_fields"`
 	ProductID          string            `json:"product_id"`
 	ProductName        string            `json:"product_name"`
 	ProductTags        []string          `json:"product_tags"`
-	Details            RateDetails       `json:"rate"`
 	StartingAt         string            `json:"starting_at"`
-	CommitRate         *CommitRate       `json:"commit_rate,omitempty"`
-	EndingBefore       string            `json:"ending_before,omitempty"`
-	PricingGroupValues map[string]string `json:"pricing_group_values,omitempty"`
 }
 
 type RateDetails struct {
-	RateType           string            `json:"rate_type"`
 	CreditType         CreditType        `json:"credit_type,omitempty"`
 	IsProrated         bool              `json:"is_prorated,omitempty"`
 	Price              float64           `json:"price,omitempty"`
 	PricingGroupValues map[string]string `json:"pricing_group_values,omitempty"`
 	Quantity           float64           `json:"quantity,omitempty"`
+	RateType           string            `json:"rate_type"`
 	Tiers              []Tier            `json:"tiers,omitempty"`
 	UseListPrices      bool              `json:"use_list_prices,omitempty"`
 }
