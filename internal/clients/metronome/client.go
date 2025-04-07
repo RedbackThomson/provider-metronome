@@ -70,11 +70,11 @@ func (c *Client) newAuthenticatedRequest(ctx context.Context, method, url string
 	return req, nil
 }
 
-func New(log logging.Logger, baseURL, authToken string) *Client {
+func New(log logging.Logger, baseURL, authToken string) (*Client, error) {
 	return &Client{
 		logger:     log,
 		baseURL:    baseURL,
 		authToken:  authToken,
 		httpClient: &http.Client{},
-	}
+	}, nil
 }

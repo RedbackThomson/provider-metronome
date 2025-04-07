@@ -29,7 +29,7 @@ type Connector[R resource.Managed, T managed.ExternalClient] struct {
 	Client  client.Client
 	Usage   resource.Tracker
 
-	NewMetronomeClientFn func(log logging.Logger, baseURL, authToken string) *metronomeClient.Client
+	NewMetronomeClientFn func(log logging.Logger, baseURL, authToken string) (*metronomeClient.Client, error)
 	NewExternalClientFn  func(log logging.Logger, client *metronomeClient.Client) T
 }
 
@@ -44,7 +44,7 @@ func (c *Connector[R, T]) Connect(ctx context.Context, mg resource.Managed) (man
 
 	pc := &metronomev1alpha1.ProviderConfig{}
 
-	if mg.GetProviderConfigReference() == nil {
+	if cr.GetProviderConfigReference() == nil {
 		return nil, errors.New(errProviderConfigNotSet)
 	}
 
@@ -63,8 +63,8 @@ func (c *Connector[R, T]) Connect(ctx context.Context, mg resource.Managed) (man
 		return nil, errors.Wrap(err, errGetCreds)
 	}
 
-	m := c.NewMetronomeClientFn(c.Logger, c.BaseURL, string(kc))
-	if m == nil {
+	m, err := c.NewMetronomeClientFn(c.Logger, c.BaseURL, string(kc))
+	if err != nil {
 		return nil, errors.Wrap(err, errConnectToMetronome)
 	}
 
