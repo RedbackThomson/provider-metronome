@@ -229,6 +229,25 @@ func Test_External_Observe(t *testing.T) {
 				out: managed.ExternalObservation{ResourceExists: false},
 			},
 		},
+		"IgnoresDifferentStartingAt": {
+			args: args{
+				metronome: &MockRateClient{
+					GetRatesFn: func(ctx context.Context, reqData metronomeClient.GetRatesRequest, nextPage string) (*metronomeClient.GetRatesResponse, error) {
+						// Create a copy of fullyPopulated with a different startingAt
+						rateWithDifferentStartingAt := fullyPopulated
+						rateWithDifferentStartingAt.StartingAt = "different-starting-at"
+						return &metronomeClient.GetRatesResponse{
+							Data: []metronomeClient.Rate{rateWithDifferentStartingAt},
+						}, nil
+					},
+				},
+				mg: rate(fullyPopulate),
+			},
+			want: want{
+				out: managed.ExternalObservation{ResourceExists: true, ResourceUpToDate: true},
+				err: nil,
+			},
+		},
 		"UpToDate": {
 			args: args{
 				metronome: &MockRateClient{

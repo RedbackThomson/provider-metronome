@@ -244,6 +244,7 @@ func (e *metronomeExternal) isUpToDate(cr *v1alpha1.Rate, r *metronomeClient.Rat
 		cmpopts.EquateEmpty(),
 		cmpopts.IgnoreFields(v1alpha1.RateParameters{},
 			"RateCardID",
+			"StartingAt",
 		),
 	}
 
