@@ -171,7 +171,9 @@ func Test_External_Observe(t *testing.T) {
 					GetProductFn: func(ctx context.Context, reqData metronomeClient.GetProductRequest) (*metronomeClient.GetProductResponse, error) {
 						return &metronomeClient.GetProductResponse{
 							Data: metronomeClient.Product{
-								ID: "id1", Current: metronomeClient.ProductDetails{Name: "name"},
+								ID:      "id1",
+								Type:    "USAGE",
+								Current: metronomeClient.ProductDetails{Name: "name"},
 							},
 						}, nil
 					},
@@ -181,6 +183,7 @@ func Test_External_Observe(t *testing.T) {
 					mg.Spec.ForProvider = v1alpha1.ProductParameters{
 						Name: "name",
 					}
+					mg.Spec.ForProvider.Type = "usage"
 				}),
 			},
 			want: want{
