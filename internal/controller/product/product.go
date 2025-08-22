@@ -19,6 +19,7 @@ package product
 import (
 	"context"
 	"sort"
+	"strings"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -245,6 +246,8 @@ func isUpToDate(cr *v1alpha1.Product, metric *metronomeClient.Product) (bool, st
 	converter := &converters.ProductConverterImpl{}
 	params := converter.FromProductToParameters(metric)
 
+	caseInsensitiveComparer := cmp.Comparer(strings.EqualFold)
+
 	spec.BillableMetricRef = nil
 	spec.BillableMetricSelector = nil
 
@@ -262,6 +265,12 @@ func isUpToDate(cr *v1alpha1.Product, metric *metronomeClient.Product) (bool, st
 
 	opts := []cmp.Option{
 		cmpopts.EquateEmpty(),
+		cmp.FilterPath(func(p cmp.Path) bool {
+			return p.String() == "Type"
+		}, caseInsensitiveComparer),
+		cmpopts.IgnoreFields(v1alpha1.ProductParameters{},
+			"StartingAt",
+		),
 	}
 
 	return cmp.Equal(spec, params, opts...), cmp.Diff(spec, params, opts...)
