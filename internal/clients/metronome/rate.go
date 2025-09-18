@@ -94,7 +94,7 @@ type AddRateResponse struct {
 
 type Tier struct {
 	Price float64 `json:"price"`
-	Size  float64 `json:"size"`
+	Size  float64 `json:"size,omitempty"`
 }
 
 type CommitRate struct {
