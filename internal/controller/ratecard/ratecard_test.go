@@ -63,9 +63,10 @@ type notRateCardResource struct {
 }
 
 type MockRateCardClient struct {
-	CreateRateCardFn func(ctx context.Context, reqData metronomeClient.CreateRateCardRequest) (*metronomeClient.CreateRateCardResponse, error)
-	GetRateCardFn    func(ctx context.Context, reqData metronomeClient.GetRateCardRequest) (*metronomeClient.GetRateCardResponse, error)
-	UpdateRateCardFn func(ctx context.Context, reqData metronomeClient.UpdateRateCardRequest) (*metronomeClient.UpdateRateCardResponse, error)
+	CreateRateCardFn  func(ctx context.Context, reqData metronomeClient.CreateRateCardRequest) (*metronomeClient.CreateRateCardResponse, error)
+	GetRateCardFn     func(ctx context.Context, reqData metronomeClient.GetRateCardRequest) (*metronomeClient.GetRateCardResponse, error)
+	UpdateRateCardFn  func(ctx context.Context, reqData metronomeClient.UpdateRateCardRequest) (*metronomeClient.UpdateRateCardResponse, error)
+	ArchiveRateCardFn func(ctx context.Context, reqData metronomeClient.ArchiveRateCardRequest) (*metronomeClient.ArchiveRateCardResponse, error)
 }
 
 // CreateRateCard implements metronome.RateCardClient.
@@ -81,6 +82,11 @@ func (m *MockRateCardClient) GetRateCard(ctx context.Context, reqData metronomeC
 // UpdateRateCard implements metronome.RateCardClient.
 func (m *MockRateCardClient) UpdateRateCard(ctx context.Context, reqData metronomeClient.UpdateRateCardRequest) (*metronomeClient.UpdateRateCardResponse, error) {
 	return m.UpdateRateCardFn(ctx, reqData)
+}
+
+// ArchiveRateCard implements metronome.RateCardClient.
+func (m *MockRateCardClient) ArchiveRateCard(ctx context.Context, reqData metronomeClient.ArchiveRateCardRequest) (*metronomeClient.ArchiveRateCardResponse, error) {
+	return m.ArchiveRateCardFn(ctx, reqData)
 }
 
 var _ (metronomeClient.RateCardClient) = (*MockRateCardClient)(nil)
@@ -274,6 +280,84 @@ func Test_External_Create(t *testing.T) {
 
 			if diff := cmp.Diff(tc.want.out, got); diff != "" {
 				t.Fatalf("e.Create(...): -want out, +got out: %s", diff)
+			}
+		})
+	}
+}
+
+func Test_External_Delete(t *testing.T) {
+	type args struct {
+		metronome metronomeClient.RateCardClient
+		mg        resource.Managed
+	}
+	type want struct {
+		out managed.ExternalDelete
+		err error
+	}
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"NotRateCardResource": {
+			args: args{
+				mg: notRateCardResource{},
+			},
+			want: want{
+				err: errors.New(errNotRateCard),
+			},
+		},
+		"FailedToArchiveRateCard": {
+			args: args{
+				metronome: &MockRateCardClient{
+					ArchiveRateCardFn: func(ctx context.Context, reqData metronomeClient.ArchiveRateCardRequest) (*metronomeClient.ArchiveRateCardResponse, error) {
+						return nil, errBoom
+					},
+				},
+				mg: rateCard(),
+			},
+			want: want{
+				err: errors.Wrap(errBoom, errArchiveRateCard),
+			},
+		},
+		"Success": {
+			args: args{
+				metronome: &MockRateCardClient{
+					ArchiveRateCardFn: func(ctx context.Context, reqData metronomeClient.ArchiveRateCardRequest) (*metronomeClient.ArchiveRateCardResponse, error) {
+						expected := metronomeClient.ArchiveRateCardRequest{
+							Data: metronomeClient.IDOnly{ID: "id"},
+						}
+						if diff := cmp.Diff(expected, reqData); diff != "" {
+							t.Errorf("ArchiveRateCard mismatched: -want req, +got req: %s", diff)
+						}
+
+						return &metronomeClient.ArchiveRateCardResponse{
+							Data: metronomeClient.IDOnly{ID: "id"},
+						}, nil
+					},
+				},
+				mg: rateCard(func(mg *v1alpha1.RateCard) {
+					meta.SetExternalName(mg, "id")
+				}),
+			},
+			want: want{
+				out: managed.ExternalDelete{},
+				err: nil,
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			e := &metronomeExternal{
+				logger:    logging.NewNopLogger(),
+				metronome: tc.args.metronome,
+			}
+			got, gotErr := e.Delete(context.Background(), tc.args.mg)
+			if diff := cmp.Diff(tc.want.err, gotErr, test.EquateErrors()); diff != "" {
+				t.Fatalf("e.Delete(...): -want error, +got error: %s", diff)
+			}
+
+			if diff := cmp.Diff(tc.want.out, got); diff != "" {
+				t.Fatalf("e.Delete(...): -want out, +got out: %s", diff)
 			}
 		})
 	}

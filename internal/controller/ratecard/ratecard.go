@@ -187,7 +187,22 @@ func (e *metronomeExternal) Update(ctx context.Context, mg resource.Managed) (ma
 	return managed.ExternalUpdate{}, errors.New("updating a rate card is not supported")
 }
 
-func (e *metronomeExternal) Delete(_ context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+func (e *metronomeExternal) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
+	cr, ok := mg.(*v1alpha1.RateCard)
+	if !ok {
+		return managed.ExternalDelete{}, errors.New(errNotRateCard)
+	}
+
+	e.logger.Debug("Creating")
+
+	if _, err := e.metronome.ArchiveRateCard(ctx, metronomeClient.ArchiveRateCardRequest{
+		Data: metronomeClient.IDOnly{
+			ID: meta.GetExternalName(cr),
+		},
+	}); err != nil {
+		return managed.ExternalDelete{}, errors.Wrap(err, errArchiveRateCard)
+	}
+
 	return managed.ExternalDelete{}, nil
 }
 

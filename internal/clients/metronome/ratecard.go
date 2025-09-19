@@ -33,6 +33,7 @@ type RateCardClient interface {
 	GetRateCard(ctx context.Context, reqData GetRateCardRequest) (*GetRateCardResponse, error)
 	CreateRateCard(ctx context.Context, reqData CreateRateCardRequest) (*CreateRateCardResponse, error)
 	UpdateRateCard(ctx context.Context, reqData UpdateRateCardRequest) (*UpdateRateCardResponse, error)
+	ArchiveRateCard(ctx context.Context, reqData ArchiveRateCardRequest) (*ArchiveRateCardResponse, error)
 }
 
 type RateCardClientImpl struct {
@@ -87,6 +88,10 @@ type UpdateRateCardRequest struct {
 }
 
 type UpdateRateCardResponse DataID
+
+type ArchiveRateCardRequest DataID
+
+type ArchiveRateCardResponse DataID
 
 type FiatCreditType struct {
 	ID   string `json:"id"`
@@ -199,6 +204,44 @@ func (c *RateCardClientImpl) UpdateRateCard(ctx context.Context, reqData UpdateR
 	}
 
 	var response UpdateRateCardResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+func (c *RateCardClientImpl) ArchiveRateCard(ctx context.Context, reqData ArchiveRateCardRequest) (*ArchiveRateCardResponse, error) {
+	url := fmt.Sprintf("%s/v1/contract-pricing/rate-cards/archive", c.Client.baseURL)
+
+	if !IsUUID(reqData.Data.ID) {
+		return nil, ErrRateCardInvalidName
+	}
+
+	jsonData, err := json.Marshal(reqData)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := c.Client.newAuthenticatedRequest(ctx, "POST", url, jsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.Client.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() // nolint:errcheck // Read-only stream
+
+	if resp.StatusCode != http.StatusOK {
+		if c := ParseClientError(resp.Body); c != nil {
+			return nil, errors.Wrap(c, "failed to archive rate card")
+		}
+		return nil, errors.New("failed to archive rate card: " + resp.Status)
+	}
+
+	var response ArchiveRateCardResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, err
 	}
