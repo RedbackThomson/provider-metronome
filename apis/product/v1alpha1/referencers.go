@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"context"
+	"strings"
 
 	"github.com/crossplane/crossplane-runtime/pkg/reference"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -34,25 +35,27 @@ func (pr *Product) ResolveReferences(ctx context.Context, c client.Reader) error
 	var rsp reference.ResolutionResponse
 	var err error
 
-	// Resolve spec.forProvider.BillableMetricID
-	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: pr.Spec.ForProvider.BillableMetricID,
-		Reference:    pr.Spec.ForProvider.BillableMetricRef,
-		Selector:     pr.Spec.ForProvider.BillableMetricSelector,
-		To:           reference.To{Managed: &billablemetricv1alpha1.BillableMetric{}, List: &billablemetricv1alpha1.BillableMetricList{}},
-		Extract:      BillableMetricID(),
-	})
+	if strings.EqualFold(pr.Spec.ForProvider.Type, "usage") {
+		// Resolve spec.forProvider.BillableMetricID
+		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			CurrentValue: pr.Spec.ForProvider.BillableMetricID,
+			Reference:    pr.Spec.ForProvider.BillableMetricRef,
+			Selector:     pr.Spec.ForProvider.BillableMetricSelector,
+			To:           reference.To{Managed: &billablemetricv1alpha1.BillableMetric{}, List: &billablemetricv1alpha1.BillableMetricList{}},
+			Extract:      BillableMetricID(),
+		})
 
-	if err != nil {
-		return errors.Wrap(err, "Spec.ForProvider.BillableMetricID")
+		if err != nil {
+			return errors.Wrap(err, "Spec.ForProvider.BillableMetricID")
+		}
+
+		if rsp.ResolvedValue == "" {
+			return errors.New("Spec.ForProvider.BillableMetricID not yet resolvable")
+		}
+
+		pr.Spec.ForProvider.BillableMetricID = rsp.ResolvedValue
+		pr.Spec.ForProvider.BillableMetricRef = rsp.ResolvedReference
 	}
-
-	if rsp.ResolvedValue == "" {
-		return errors.New("Spec.ForProvider.BillableMetricID not yet resolvable")
-	}
-
-	pr.Spec.ForProvider.BillableMetricID = rsp.ResolvedValue
-	pr.Spec.ForProvider.BillableMetricRef = rsp.ResolvedReference
 
 	return nil
 }
